@@ -5090,8 +5090,10 @@ namespace Zoomios
 	interface MobileRTCReminderDelegate
 	{
 		// @optional -(void)onReminderNotify:(MobileRTCReminderContent * _Nullable)content handle:(MobileRTCReminderHandler * _Nullable)handler;
+		// NOTE: the managed name cannot be 'Handle' - it collides with INativeObject.Handle in the
+		// generated protocol interface (default interface members), which fails to compile on .net 10.
 		[Export ("onReminderNotify:handle:")]
-		void Handle ([NullAllowed] MobileRTCReminderContent content, [NullAllowed] MobileRTCReminderHandler handler);
+		void OnReminderNotify ([NullAllowed] MobileRTCReminderContent content, [NullAllowed] MobileRTCReminderHandler handler);
 	}
 
 	// @interface MobileRTCReminderContent : NSObject

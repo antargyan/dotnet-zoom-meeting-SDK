@@ -7,7 +7,9 @@ We try to keep the meeting SDK version above Zoom's [minimum supported version](
 ## Current Versions:
 MAUI Android: Meeting SDK Version: 6.1.1.22770 [![AndroidMauiNugetShield]][AndroidMauiNugetLink] 
 
-(Note - I had to drop .net 8 support in the latest version and go .net 9 only, because the nuget package got too big targetting both versions. I'm sure there is a way to use shared files in the package output, but I don't have the time to research it. A PR is welcome if someone needs .net 8 support)
+(Note - the bindings target **.net 10 only** (`net10.0-android` / `net10.0-ios`). Only a single target framework is shipped, because the nuget package gets too big targetting multiple versions. I'm sure there is a way to use shared files in the package output, but I don't have the time to research it. A PR is welcome if someone needs an older .net version)
+
+You need the .NET 10 SDK plus the `android` / `ios` workloads to build this repo.
 
 MAUI iOS: MobileRTC Version: 6.1.0.16235 [![iOSMAUINugetShield]][iOSMAUINugetLink]
 
@@ -70,14 +72,19 @@ public class AppSettings
 
 * Your consuming app requires the following nuget versions to be explicitly set for android
 ```
-    <!-- Android Only Nuget Packages -->
-      <PackageReference Include="Xamarin.AndroidX.Security.SecurityCrypto" Version="1.1.0.1-alpha06" />
-      <PackageReference Include="Xamarin.Google.Android.Material" Version="1.11.0.2" />
-      <PackageReference Include="Xamarin.Google.Crypto.Tink.Android" Version="1.15.0" />
-      <PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.8.3" />
-      <PackageReference Include="Xamarin.AndroidX.Collection" Version="1.4.3"/>
-      <PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.4.3"/>
+    <!-- Android Only Nuget Packages (.net 10 / MAUI 10.0.20 aligned set) -->
+      <PackageReference Include="Xamarin.AndroidX.Security.SecurityCrypto" Version="1.1.0.2-alpha06" />
+      <PackageReference Include="Xamarin.Google.Android.Material" Version="1.12.0.5" />
+      <PackageReference Include="Xamarin.Google.Crypto.Tink.Android" Version="1.16.0.1" />
+      <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.7.1.1" />
+      <PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.8.8.1" />
+      <PackageReference Include="Xamarin.AndroidX.Collection" Version="1.5.0.3"/>
+      <PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.5.0.3"/>
+      <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Ktx" Version="2.9.2.1" />
+      <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.9.2.1" />
+      <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.9.2.1" />
 ```
+  The AndroidX versions above are pinned to the generation MAUI 10.0.20 depends on (AndroidX Lifecycle 2.9.2.1). Mixing generations produces NU1107/NU1608 restore errors. See `src/MAUI/SampleApp/SampleApp.csproj` for the full working list.
 * Requires your android app to compile for Android 14
 
 ## Installation and integration - Android

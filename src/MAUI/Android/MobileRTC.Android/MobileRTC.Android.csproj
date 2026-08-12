@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net9.0-android</TargetFrameworks>
+    <TargetFrameworks>net10.0-android</TargetFrameworks>
     <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -24,17 +24,17 @@
     <PackageReference Include="Xamarin.Google.Crypto.Tink.Android" Version="1.16.0.1" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer.Core" Version="2.19.1" />
     <PackageReference Include="Xam.Plugins.Android.ExoPlayer.UI" Version="2.19.1" />
-    <PackageReference Include="Xamarin.AndroidX.SwipeRefreshLayout" Version="1.1.0.23" />
-    <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.6.1.10" />
-    <PackageReference Include="Xamarin.AndroidX.ConstraintLayout" Version="2.1.4.15" />
-    <PackageReference Include="Xamarin.Google.Android.Material" Version="1.12.0.2" />
+    <PackageReference Include="Xamarin.AndroidX.SwipeRefreshLayout" Version="1.1.0.29" />
+    <PackageReference Include="Xamarin.AndroidX.AppCompat" Version="1.7.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.ConstraintLayout" Version="2.2.1.3" />
+    <PackageReference Include="Xamarin.Google.Android.Material" Version="1.12.0.5" />
     <PackageReference Include="XAB.FlexboxLayout" Version="3.0.0.2" /> <!-- Check this one-->
     <PackageReference Include="Xamarin.AndroidX.MultiDex" Version="2.0.1.28" />
     <PackageReference Include="GoogleGson" Version="2.11.0.2" />
-    <PackageReference Include="Xamarin.Android.Glide.Annotations" Version="4.16.0.6" />
-    <PackageReference Include="Xamarin.Android.Glide" Version="4.16.0.6" />
+    <PackageReference Include="Xamarin.Android.Glide.Annotations" Version="4.16.0.14" />
+    <PackageReference Include="Xamarin.Android.Glide" Version="4.16.0.14" />
     <!--<PackageReference Include="Naxam.EventBus.Droid" Version="3.0.0-pre1" />-->
-    <PackageReference Include="Xamarin.AndroidX.RecyclerView" Version="1.3.2.7" />
+    <PackageReference Include="Xamarin.AndroidX.RecyclerView" Version="1.4.0.3" />
     <!-- LOTTIE GOES HERE IN BUILD.GRADLE - WE RELY ON OUR CUSTOM PROJ-->
     <PackageReference Include="Xamarin.AndroidX.Window" Version="1.3.0.2" />
     <PackageReference Include="Xamarin.AndroidX.Window.WindowJava" Version="1.3.0.2" />
@@ -42,26 +42,26 @@
     <PackageReference Include="Xamarin.Kotlin.StdLib.Jdk8" Version="2.0.10" />
     <PackageReference Include="Xamarin.KotlinX.Coroutines.Android" Version="1.8.1.2" />
     <PackageReference Include="Xamarin.KotlinX.Coroutines.Core" Version="1.8.1.2" />
-    <PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" Version="1.13.1.4" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.8.5" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.8.5" />
-    <PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.8.5.2" />
+    <PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" Version="1.16.0.3" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.9.2.1" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.9.2.1" />
+    <PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.8.8.1" />
     <PackageReference Include="Karamunting.AndroidX.DaveMorrissey.SubsamplingScaleImageView" Version="3.10.0" />
     <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.11" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.8.7.2" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Ktx" Version="2.8.7.2" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.9.2.1" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Ktx" Version="2.9.2.1" />
     <PackageReference Include="Xamarin.Android.ReactiveX.RxJava3.RxAndroid" Version="3.0.2.13" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.Material3" Version="1.3.0" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.Material3.WindowSizeClass" Version="1.3.0" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.UI.Tooling.Preview" Version="1.7.0" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.Material3" Version="1.3.2.3" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.Material3.WindowSizeClass" Version="1.3.2.3" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.UI.Tooling.Preview" Version="1.8.3.1" />
     <!-- MISSING  androidx.constraintlayout:constraintlayout-compose:1.0.1 -->
-    <PackageReference Include="Xamarin.AndroidX.Activity.Compose" Version="1.9.2" />
+    <PackageReference Include="Xamarin.AndroidX.Activity.Compose" Version="1.10.1.3" />
     <!-- MISSING  androidx.lifecycle:lifecycle-runtime-compose:2.6.1 -->
-    <PackageReference Include="Xamarin.AndroidX.Navigation.Compose" Version="2.8.0" />
+    <PackageReference Include="Xamarin.AndroidX.Navigation.Compose" Version="2.9.2.1" />
     <PackageReference Include="Binding.Io.CoilKt.CoilCompose" Version="2.0.0" />
     <PackageReference Include="Xamarin.AndroidX.WebKit" Version="1.11.0.4" />
-    <PackageReference Include="Xamarin.AndroidX.Collection" Version="1.4.5.2" />
-    <PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.4.5.2" />
+    <PackageReference Include="Xamarin.AndroidX.Collection" Version="1.5.0.3" />
+    <PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.5.0.3" />
     <PackageReference Include="Xamarin.AndroidX.DataBinding.ViewBinding" Version="8.6.0" />
   </ItemGroup>
   <ItemGroup>
@@ -70,7 +70,7 @@
   <Target Name="AddLottieAar" BeforeTargets="GenerateNuspec">
     <ItemGroup>
       <_PackageFiles Include="../Lottie.Android/Jars/lottie-4.2.2.aar">
-        <PackagePath>lib/net9.0-android35.0</PackagePath>
+        <PackagePath>lib/net10.0-android36.0</PackagePath>
         <Visible>false</Visible>
         <BuildAction>None</BuildAction>
       </_PackageFiles>
