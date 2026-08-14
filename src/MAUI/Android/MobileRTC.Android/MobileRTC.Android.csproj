@@ -1,16 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net10.0-android</TargetFrameworks>
-    <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
+    <!-- 28, not 23: mobilertc.aar declares minSdkVersion=28. -->
+    <SupportedOSPlatformVersion>28</SupportedOSPlatformVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>zoommeetingsdk.dotnet.android</PackageId>
-    <Version>6.1.1.22771</Version>
+    <Version>7.1.6.41900</Version>
     <Title>ZoomMeetingSDK Binding for MAUI Android</Title>
     <Authors>Visual Service, Adam Diament</Authors>
     <PackageProjectUrl>https://github.com/VisualService/dotnet-zoom-meeting-SDK</PackageProjectUrl>
-    <AndroidBoundInterfacesContainTypes>false</AndroidBoundInterfacesContainTypes>
+    <!-- true (was false): 7.x added ZoomSDKAuthenticationListener.onNotificationServiceStatus, whose
+         parameter is an enum NESTED IN THAT INTERFACE. With this false the nested enum is not
+         generated, so the method is dropped from the managed interface - but the generated Java ACW
+         still has to implement the real Java interface, and javac fails with
+         "ZoomSDKAuthenticationListenerImplementor is not abstract and does not override abstract
+         method onNotificationServiceStatus". -->
+    <AndroidBoundInterfacesContainTypes>true</AndroidBoundInterfacesContainTypes>
     <AndroidBoundInterfacesContainConstants>false</AndroidBoundInterfacesContainConstants>
     <AndroidBoundInterfacesContainStaticAndDefaultInterfaceMethods>false</AndroidBoundInterfacesContainStaticAndDefaultInterfaceMethods>
     <AndroidR8JarPath>../R8/r8.jar</AndroidR8JarPath>
@@ -38,31 +45,97 @@
     <!-- LOTTIE GOES HERE IN BUILD.GRADLE - WE RELY ON OUR CUSTOM PROJ-->
     <PackageReference Include="Xamarin.AndroidX.Window" Version="1.3.0.2" />
     <PackageReference Include="Xamarin.AndroidX.Window.WindowJava" Version="1.3.0.2" />
-    <PackageReference Include="Xamarin.Kotlin.StdLib" Version="2.0.10" />
-    <PackageReference Include="Xamarin.Kotlin.StdLib.Jdk8" Version="2.0.10" />
-    <PackageReference Include="Xamarin.KotlinX.Coroutines.Android" Version="1.8.1.2" />
-    <PackageReference Include="Xamarin.KotlinX.Coroutines.Core" Version="1.8.1.2" />
+    <PackageReference Include="Xamarin.Kotlin.StdLib" Version="2.2.20" />
+    <PackageReference Include="Xamarin.Kotlin.StdLib.Jdk8" Version="2.2.20" />
+    <!-- 1.10.2.1, not Zoom's declared 1.9.0: the AndroidX/Compose graph pulls
+         KotlinX.Coroutines.Core.Jvm 1.10.2.1 (Compose.Runtime, Lifecycle, Activity, Core all require
+         it), and the core classes come from that Jvm artifact. Leaving the android artifact at 1.9.0
+         mixes versions and Zoom's init dies with
+         "Module with the Main dispatcher is missing ... ensure it has the same version as
+         kotlinx-coroutines-core". Zoom declares 1.9.0 as a minimum, so 1.10.2.1 satisfies it. -->
+    <PackageReference Include="Xamarin.KotlinX.Coroutines.Android" Version="1.10.2.1" />
+    <PackageReference Include="Xamarin.KotlinX.Coroutines.Core" Version="1.10.2.1" />
     <PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" Version="1.16.0.3" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.9.2.1" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.9.2.1" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.9.4" />
     <PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.8.8.1" />
     <PackageReference Include="Karamunting.AndroidX.DaveMorrissey.SubsamplingScaleImageView" Version="3.10.0" />
     <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.11" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.9.2.1" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Ktx" Version="2.9.2.1" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Ktx" Version="2.9.4" />
     <PackageReference Include="Xamarin.Android.ReactiveX.RxJava3.RxAndroid" Version="3.0.2.13" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.Material3" Version="1.3.2.3" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.Material3.WindowSizeClass" Version="1.3.2.3" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.UI.Tooling.Preview" Version="1.8.3.1" />
-    <!-- MISSING  androidx.constraintlayout:constraintlayout-compose:1.0.1 -->
-    <PackageReference Include="Xamarin.AndroidX.Activity.Compose" Version="1.10.1.3" />
-    <!-- MISSING  androidx.lifecycle:lifecycle-runtime-compose:2.6.1 -->
-    <PackageReference Include="Xamarin.AndroidX.Navigation.Compose" Version="2.9.2.1" />
-    <PackageReference Include="Binding.Io.CoilKt.CoilCompose" Version="2.0.0" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.Material3" Version="1.4.0" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.Material3.WindowSizeClass" Version="1.4.0" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.UI.Tooling.Preview" Version="1.9.4" />
+    <!-- MISSING  androidx.constraintlayout:constraintlayout-compose:1.1.1 - no Xamarin binding published -->
+    <PackageReference Include="Xamarin.AndroidX.Activity.Compose" Version="1.11.0" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Compose" Version="2.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Compose" Version="2.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Navigation.Compose" Version="2.9.2" />
+    <!-- Coil at Zoom's declared version (coilVersion 2.3.0), vendored as the aars' classes.jar.
+         Zoom 7.1.6 constructs a coil ImageLoader inside ZoomSDK.initialize, so without coil-base the
+         SDK throws java.lang.ClassNotFoundException: coil.ImageLoader$Builder and init fails outright.
+         Why not the NuGet bindings:
+           - Binding.Io.CoilKt.CoilCompose 2.0.0 declares NO dependencies, so it never brings coil-base.
+           - Io.CoilKt.Coil/CoilBase 2.0.0.3 resolve their Java deps through the Dependencies.Gradle
+             package, which failed here with XACDJ7028 (kotlin-android-extensions-runtime jar missing
+             from ~/.gradle/caches).
+         Bind="false": only the Java classes are needed at runtime; no managed API is generated.
+         Jars rather than aars/AndroidMavenLibrary: staging coil-base as an aar with Bind="false"
+         creates an lp/<n>.stamp marker that aapt2 is then handed as a resource path, failing with
+         APT2144 "invalid file path ... 312.stamp". The jars carry the classes and skip aapt2. -->
+    <!-- The coil jars live in the APP project (SampleApp/Jars), not here: a binding project's default
+         item globbing picks up Jars\*.jar and BINDS them regardless of Bind="false", generating a
+         managed Coil API that does not compile (CS0535/CS0737/CS0102 on CrossfadeDrawable,
+         GenericViewTarget...). App projects include jars without binding them.
+         CONSUMERS: apps using this package must add coil-base 2.3.0 themselves the same way. -->
+    <!-- coil-compose / coil-compose-base are deliberately NOT included: they require
+         accompanist-drawablepainter, whose only current Xamarin binding (0.37.3.x) depends on
+         Compose UI 1.11.3.1 and would drag the whole Compose graph off Zoom's 1.9.4 line - the exact
+         version skew suspected of crashing Zoom's native conf module. coil.ImageLoader (what
+         ZoomSDK.initialize needs) lives in coil-base. If a Zoom Compose screen turns out to need
+         AsyncImage, pair coil-compose 2.3.0 with an accompanist build on Compose 1.9.x instead. -->
+    <!-- Coil's POM dependencies, satisfied explicitly. AndroidMavenLibrary enforces these (XA4242)
+         and that check is worth keeping: an unsatisfied Java dependency is precisely how the missing
+         coil.ImageLoader slipped through before - it built fine and only failed at runtime. -->
+    <PackageReference Include="Square.OkHttp3" Version="4.12.0.10" />
+    <PackageReference Include="Square.OkIO" Version="3.9.1.4" />
+    <PackageReference Include="Xamarin.AndroidX.Annotation" Version="1.10.0.1" />
+    <!-- 1.7.1.1, matching AppCompat: 1.7.1.4 pulls Fragment 1.8.9.3 from the next generation and
+         collides with the Lifecycle 2.9.x pins (NU1107). -->
+    <PackageReference Include="Xamarin.AndroidX.AppCompat.AppCompatResources" Version="1.7.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.4.2.3" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime" Version="2.9.4" />
     <PackageReference Include="Xamarin.AndroidX.WebKit" Version="1.11.0.4" />
     <PackageReference Include="Xamarin.AndroidX.Collection" Version="1.5.0.3" />
     <PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.5.0.3" />
     <PackageReference Include="Xamarin.AndroidX.DataBinding.ViewBinding" Version="8.6.0" />
+    <!-- New in Zoom Meeting SDK 7.1.6 (see mobilertc-android-studio/mobilertc/versions.gradle) -->
+    <PackageReference Include="Xamarin.AndroidX.Work.Runtime" Version="2.9.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Service" Version="2.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.Core" Version="1.4.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.Camera2" Version="1.4.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.Lifecycle" Version="1.4.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.View" Version="1.4.1.1" />
+    <!-- NOT BOUND: com.google.mlkit:text-recognition:16.0.1. The Xamarin MLKit binding pulls both
+         bundled and unbundled MLKit sub-packages, which declare the same Java namespaces
+         (com.google.mlkit.common, com.google.mlkit.vision.common, com.google.firebase.encoders.json)
+         and fail the Android manifest merger with AMM0000 when an app packages them. Zoom's aar
+         does not bundle MLKit either, and 6.1.1 shipped without it, so this keeps parity: any Zoom
+         feature relying on on-device text recognition will not resolve at runtime. -->
+    <PackageReference Include="Xamarin.AndroidX.ProfileInstaller.ProfileInstaller" Version="1.4.1.8" />
+    <PackageReference Include="Xamarin.Jetbrains.Annotations" Version="23.0.0.5" />
+    <!-- NOT declared by Zoom: androidx.credentials, credentials-play-services-auth,
+         paging-compose and compose ui-viewbinding appear in mobilertc/versions.gradle but are never
+         added to the aar's dependency configuration in build.gradle - they are unused entries in the
+         version catalogue. Adding credentials-play-services-auth pulls a SECOND copy of the whole
+         Play Services family (~1600 duplicate classes: gms.base, gms.common, gms.auth, gms.fido...)
+         and R8 fails with "Type ... is defined multiple times". -->
+
+    <!-- NOT BOUND: com.zoom:blueparrottsdk:4.8.2 (no Xamarin binding exists - BlueParrott
+         headset button support will not resolve at runtime if that code path is hit)
+         org.jetbrains.kotlinx:kotlinx-coroutines-swing is JVM/desktop only - not applicable to Android -->
+
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lottie.Android\Lottie.Android.csproj" PrivateAssets="all" />
@@ -77,6 +150,11 @@
     </ItemGroup>
   </Target>
     <PropertyGroup>
-    <NoWarn>NU1605</NoWarn>
+    <!-- NU1605/NU1608 are suppressed deliberately, NOT worked around by bumping versions. These
+         pins are the versions Zoom 7.1.6 compiled against (mobilertc/versions.gradle); other packages
+         transitively ask for newer ones and NuGet reports the direct reference as a downgrade. Raising
+         the pins to silence the warnings is what breaks the SDK at runtime. -->
+    <NoWarn>$(NoWarn);NU1605;NU1608</NoWarn>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1605</WarningsNotAsErrors>
   </PropertyGroup>
 </Project>

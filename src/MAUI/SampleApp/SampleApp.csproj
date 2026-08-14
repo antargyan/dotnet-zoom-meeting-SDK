@@ -1,10 +1,17 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk" InitialTargets="ConfigureZoomAndroidBuild">
     <PropertyGroup Condition="'$(TargetFramework)'=='net10.0-android'">
       <MauiVersion>10.0.20</MauiVersion>
     </PropertyGroup>
     <PropertyGroup>
     <TargetFrameworks>net10.0-android</TargetFrameworks>
-    <JavaMaximumHeapSize>2G</JavaMaximumHeapSize>
+    <!-- mobilertc.aar is ~295 MB of Java; at a smaller heap d8/r8 thrashes for hours. -->
+    <JavaMaximumHeapSize>4G</JavaMaximumHeapSize>
+    <AndroidEnableMultiDex>true</AndroidEnableMultiDex>
+    <!-- d8 lists every input jar on its command line; the aar expands to thousands, and at the
+         default obj depth that exceeds Windows' 32 KB limit, surfacing as MSB6003 / Win32 206
+         "filename or extension is too long" against java.exe. -->
+    <ZoomAndroidObjRoot Condition="'$(ZoomAndroidObjRoot)' == ''">$(SystemDrive)\zsa\</ZoomAndroidObjRoot>
+    <IntermediateOutputPath>$(ZoomAndroidObjRoot)$(Configuration)\</IntermediateOutputPath>
     	<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
 		<!-- <TargetFrameworks>$(TargetFrameworks);net7.0-tizen</TargetFrameworks> -->
 		<OutputType>Exe</OutputType>
@@ -26,7 +33,7 @@
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">23.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">28.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
@@ -76,35 +83,128 @@
     <!-- LOTTIE GOES HERE IN BUILD.GRADLE - WE RELY ON OUR CUSTOM PROJ-->
     <PackageReference Include="Xamarin.AndroidX.Window" Version="1.3.0.2" />
     <PackageReference Include="Xamarin.AndroidX.Window.WindowJava" Version="1.3.0.2" />
-    <PackageReference Include="Xamarin.Kotlin.StdLib" Version="2.0.10" />
-    <PackageReference Include="Xamarin.Kotlin.StdLib.Jdk8" Version="2.0.10" />
-    <PackageReference Include="Xamarin.KotlinX.Coroutines.Android" Version="1.8.1.2" />
-    <PackageReference Include="Xamarin.KotlinX.Coroutines.Core" Version="1.8.1.2" />
+    <PackageReference Include="Xamarin.Kotlin.StdLib" Version="2.2.20" />
+    <PackageReference Include="Xamarin.Kotlin.StdLib.Jdk8" Version="2.2.20" />
+    <!-- 1.10.2.1, not Zoom's declared 1.9.0: the AndroidX/Compose graph pulls
+         KotlinX.Coroutines.Core.Jvm 1.10.2.1 (Compose.Runtime, Lifecycle, Activity, Core all require
+         it), and the core classes come from that Jvm artifact. Leaving the android artifact at 1.9.0
+         mixes versions and Zoom's init dies with
+         "Module with the Main dispatcher is missing ... ensure it has the same version as
+         kotlinx-coroutines-core". Zoom declares 1.9.0 as a minimum, so 1.10.2.1 satisfies it. -->
+    <PackageReference Include="Xamarin.KotlinX.Coroutines.Android" Version="1.10.2.1" />
+    <PackageReference Include="Xamarin.KotlinX.Coroutines.Core" Version="1.10.2.1" />
     <PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" Version="1.16.0.3" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.9.2.1" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.9.2.1" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime.Ktx" Version="2.9.4" />
     <PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.8.8.1" />
     <PackageReference Include="Karamunting.AndroidX.DaveMorrissey.SubsamplingScaleImageView" Version="3.10.0" />
     <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.11" />
-    <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Ktx" Version="2.9.2.1" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Ktx" Version="2.9.4" />
     <PackageReference Include="Xamarin.Android.ReactiveX.RxJava3.RxAndroid" Version="3.0.2.13" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.Material3" Version="1.3.2.3" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.Material3.WindowSizeClass" Version="1.3.2.3" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.UI.Tooling.Preview" Version="1.8.3.1" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.Material3" Version="1.4.0" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.Material3.WindowSizeClass" Version="1.4.0" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.UI.Tooling.Preview" Version="1.9.4" />
     <!-- MISSING  androidx.constraintlayout:constraintlayout-compose:1.0.1 -->
-    <PackageReference Include="Xamarin.AndroidX.Activity.Compose" Version="1.10.1.3" />
+    <PackageReference Include="Xamarin.AndroidX.Activity.Compose" Version="1.11.0" />
     <!-- MISSING  androidx.lifecycle:lifecycle-runtime-compose:2.6.1 -->
-    <PackageReference Include="Xamarin.AndroidX.Navigation.Compose" Version="2.9.2.1" />
-    <PackageReference Include="Binding.Io.CoilKt.CoilCompose" Version="2.0.0" />
+    <PackageReference Include="Xamarin.AndroidX.Navigation.Compose" Version="2.9.2" />
+    <!-- Coil, pulled straight from Maven at Zoom's declared version (coilVersion 2.3.0).
+         Zoom 7.1.6 constructs a coil ImageLoader inside ZoomSDK.initialize, so without coil-base the
+         SDK throws java.lang.ClassNotFoundException: coil.ImageLoader$Builder and init fails outright.
+         Why not the NuGet bindings:
+           - Binding.Io.CoilKt.CoilCompose 2.0.0 declares NO dependencies, so it never brings coil-base.
+           - Io.CoilKt.Coil/CoilBase 2.0.0.3 resolve their Java deps through the Dependencies.Gradle
+             package, which failed here with XACDJ7028 (kotlin-android-extensions-runtime jar missing
+             from ~/.gradle/caches).
+         Bind="false": these are only needed as Java classes at runtime; no managed API is generated. -->
+    <!-- Coil 2.3.0 (Zoom's coilVersion). ZoomSDK.initialize constructs a coil ImageLoader, so
+         without coil-base the SDK throws ClassNotFoundException: coil.ImageLoader$Builder.
+         Kept in ..\CoilJars (outside every project folder) with Bind="false": a jar sitting inside a
+         project directory is picked up by default @(AndroidLibrary) globbing and BOUND, and the
+         generated managed Coil API does not compile (CS0535/CS0538/CS0426 on CrossfadeDrawable,
+         IEventListener...). Only the Java classes are wanted here. -->
+    <AndroidLibrary Include="..\CoilJars\coil-base-2.3.0.jar" Bind="false" />
+    <AndroidLibrary Include="..\CoilJars\coil-2.3.0.jar" Bind="false" />
+    <!-- coil-compose / coil-compose-base are deliberately NOT included: they require
+         accompanist-drawablepainter, whose only current Xamarin binding (0.37.3.x) depends on
+         Compose UI 1.11.3.1 and would drag the whole Compose graph off Zoom's 1.9.4 line - the exact
+         version skew suspected of crashing Zoom's native conf module. coil.ImageLoader (what
+         ZoomSDK.initialize needs) lives in coil-base. If a Zoom Compose screen turns out to need
+         AsyncImage, pair coil-compose 2.3.0 with an accompanist build on Compose 1.9.x instead. -->
+    <!-- Coil's POM dependencies, satisfied explicitly. AndroidMavenLibrary enforces these (XA4242)
+         and that check is worth keeping: an unsatisfied Java dependency is precisely how the missing
+         coil.ImageLoader slipped through before - it built fine and only failed at runtime. -->
+    <PackageReference Include="Square.OkHttp3" Version="4.12.0.10" />
+    <PackageReference Include="Square.OkIO" Version="3.9.1.4" />
+    <PackageReference Include="Xamarin.AndroidX.Annotation" Version="1.10.0.1" />
+    <!-- 1.7.1.1, matching AppCompat: 1.7.1.4 pulls Fragment 1.8.9.3 from the next generation and
+         collides with the Lifecycle 2.9.x pins (NU1107). -->
+    <PackageReference Include="Xamarin.AndroidX.AppCompat.AppCompatResources" Version="1.7.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.ExifInterface" Version="1.4.2.3" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Runtime" Version="2.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.ProfileInstaller.ProfileInstaller" Version="1.4.1.8" />
     <PackageReference Include="Xamarin.AndroidX.WebKit" Version="1.11.0.4" />
     <PackageReference Include="Xamarin.AndroidX.Collection" Version="1.5.0.3" />
     <PackageReference Include="Xamarin.AndroidX.Collection.Ktx" Version="1.5.0.3" />
     <PackageReference Include="Xamarin.AndroidX.DataBinding.ViewBinding" Version="8.6.0" />
+    <!-- Camera.Lifecycle pulls Tracing.Ktx 1.2.0.9 while everything else pulls Tracing 1.3.0.4.
+         AndroidX merged tracing-ktx into tracing at 1.3, so both artifacts define
+         androidx.tracing.TraceKt and R8 fails with "defined multiple times". The 1.3 main artifact
+         has the classes, so drop the ktx one. -->
+    <PackageReference Include="Xamarin.AndroidX.Tracing.Tracing.Ktx" Version="1.2.0.9" ExcludeAssets="all" />
+    <!-- Xamarin Compose 1.9.4 ships androidx/compose/runtime/Immutable.class (and siblings) twice:
+         Compose.Runtime -> Runtime.Annotation -> Annotation.Jvm (jar), and
+         Compose.Runtime.Android -> Annotation.Android (aar). R8 then fails with
+         "Type androidx.compose.runtime.Immutable is defined multiple times". Android needs the aar,
+         so exclude the JVM variant. NOTE for consumers: this exclusion does not flow through the
+         NuGet package - apps referencing zoommeetingsdk.dotnet.android need it too. -->
+    <PackageReference Include="Xamarin.AndroidX.Compose.Runtime.Annotation.Jvm" Version="1.9.4" ExcludeAssets="all" />
+    <!-- NOT declared by Zoom: androidx.credentials, credentials-play-services-auth,
+         paging-compose and compose ui-viewbinding appear in mobilertc/versions.gradle but are never
+         added to the aar's dependency configuration in build.gradle - they are unused entries in the
+         version catalogue. Adding credentials-play-services-auth pulls a SECOND copy of the whole
+         Play Services family (~1600 duplicate classes: gms.base, gms.common, gms.auth, gms.fido...)
+         and R8 fails with "Type ... is defined multiple times". -->
+
   </ItemGroup>
+  <!--
+  Zoom's own R8/ProGuard keep rules, copied verbatim from proguard.cfg at the root of the
+  Meeting SDK download.
+
+  The aar ships NO proguard.txt, so R8 gets no keep rules from the library and a Release build
+  shrinks Zoom's Java code. Zoom reaches much of it by reflection
+  (ConfProcessMgrReflection::CreateConfProcess and friends), so the stripped classes come back null
+  and the native side dereferences them: joining a meeting dies with
+  SIGSEGV (fault addr 0x0) in libzVideoApp.so via Android_InitConfModule4SingleProcess.
+  A native Android app applies this file through proguardFiles in build.gradle; the .NET equivalent
+  is the ProguardConfiguration build action.
+
+  CONSUMERS: apps using zoommeetingsdk.dotnet.android need this file too - keep rules do not flow
+  through a NuGet package.
+  -->
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <ProguardConfiguration Include="zoom-proguard.cfg" />
+  </ItemGroup>
+
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
 	  <ProjectReference Include="..\iOS\MobileRTC.iOS\MobileRTC.iOS.csproj" />
   </ItemGroup>
   <PropertyGroup>
-    <NoWarn>NU1605</NoWarn>
+    <NoWarn>$(NoWarn);NU1605;NU1608</NoWarn>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1605</WarningsNotAsErrors>
   </PropertyGroup>
+
+  <!--
+  Set from InitialTargets, not a PropertyGroup: the Xamarin.AndroidX/Firebase packages ship
+  buildTransitive targets that assign AndroidManifestMerger unconditionally and import after the
+  project body, clobbering anything set during evaluation. mobilertc.aar bundles its own Firebase
+  and Play Services copies, so the default merger rejects the duplicate namespaces (AMM0000); the
+  legacy merger skips that validation while still merging library manifests, so Zoom's activities
+  and permissions are preserved.
+  -->
+  <Target Name="ConfigureZoomAndroidBuild" Condition="$(TargetFramework.Contains('-android'))">
+    <PropertyGroup>
+      <AndroidManifestMerger>legacy</AndroidManifestMerger>
+    </PropertyGroup>
+  </Target>
 </Project>

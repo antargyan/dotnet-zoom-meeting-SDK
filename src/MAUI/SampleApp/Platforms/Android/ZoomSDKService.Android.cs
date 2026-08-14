@@ -44,6 +44,14 @@ public class DroidZoomSDKService
 
     public string ZoomVersion { get; set; }
 
+    private string lastError = "";
+
+    public string LastError
+    {
+        get => lastError;
+        set { if (value != lastError) { lastError = value; OnPropertyChanged(); } }
+    }
+
     public void InitZoomLib(string token)
     {
         try
@@ -52,34 +60,78 @@ public class DroidZoomSDKService
 
             var zoomInitParams = new ZoomSDKInitParams
             {
-                JwtToken = token
+                JwtToken = token,
+                // Mirrors the RioConf Windows head's InitParam { web_domain, enable_log }.
+                Domain = "zoom.us",
+                EnableLog = true
             };
 
             ZoomSDK.Instance.Initialize(Application.Context, this, zoomInitParams);
         }
         catch (Exception e)
         {
+            // Was swallowed silently, leaving only "Failed" on screen with no way to tell an invalid
+            // token from a binding problem.
+            global::Android.Util.Log.Error("ZoomSampleApp", $"InitZoomLib threw: {e}");
+            LastError = e.Message;
             ZoomInitStatus = ZoomInitStatus.Failed;
         }
     }
 
     public async Task JoinMeeting(string meetingID, string meetingPassword, string displayName = "Zoom Demo")
     {
+        // Android's JoinMeetingParams has no ZAK field - an anonymous join never takes one. (The
+        // Windows SDK does accept a userZAK on join; hosting on Android needs
+        // StartMeetingParamsWithoutLogin.ZoomAccessToken instead.)
         var meetingService = ZoomSDK.Instance.MeetingService;
-        var resultJoinMeeting = meetingService.JoinMeetingWithParams(global::Android.App.Application.Context, new JoinMeetingParams
-        {
-            MeetingNo = meetingID,
-            DisplayName = displayName,
-            Password = meetingPassword
-        }, new JoinMeetingOptions { });
+
+        var result = meetingService.JoinMeetingWithParams(global::Android.App.Application.Context,
+            new JoinMeetingParams
+            {
+                MeetingNo = meetingID,
+                DisplayName = displayName,
+                Password = meetingPassword
+            }, new JoinMeetingOptions { });
+
+        global::Android.Util.Log.Info("ZoomSampleApp", $"JoinMeetingWithParams returned {result}");
+
+        if (result != MeetingError.MeetingErrorSuccess)
+            LastError = $"join error {result}";
+
+        await Task.CompletedTask;
     }
+
+    private static string DescribeInitError(int errorCode) => errorCode switch
+    {
+        ZoomError.ZoomErrorSuccess => "success",
+        ZoomError.ZoomErrorInvalidArguments => "invalid arguments - the JWT is malformed or empty",
+        ZoomError.ZoomErrorIllegalAppKeyOrSecret => "illegal app key or secret",
+        ZoomError.ZoomErrorNetworkUnavailable => "network unavailable",
+        ZoomError.ZoomErrorAuthretTokenwrong => "JWT rejected",
+        ZoomError.ZoomErrorAuthretKeyOrSecretError => "key or secret error",
+        ZoomError.ZoomErrorAuthretAccountNotSupport => "account not supported",
+        ZoomError.ZoomErrorAuthretAccountNotEnableSdk => "account has the Meeting SDK disabled",
+        ZoomError.ZoomErrorDeviceNotSupported => "device not supported",
+        ZoomError.ZoomErrorDomainDontSupport => "domain not supported",
+        _ => "see us.zoom.sdk.ZoomError"
+    };
 
     public void OnZoomAuthIdentityExpired() { }
 
     public void OnZoomSDKInitializeResult(int errorCode, int internalErrorCode)
     {
+        // Logged so a failure is diagnosable from logcat (adb logcat -s ZoomSampleApp) instead of
+        // showing only "Failed" in the UI. errorCode 1 = invalid/expired JWT.
+        // global:: is required - this file's own namespace is SampleApp.Platforms.Android, which
+        // shadows the framework's Android namespace (CS0234).
+        global::Android.Util.Log.Info("ZoomSampleApp",
+            $"OnZoomSDKInitializeResult errorCode={errorCode} internalErrorCode={internalErrorCode}");
+
         if (errorCode == ZoomError.ZoomErrorSuccess)
         {
+            LastError = "";
+            // Android exposes this as getVersion(Context), not as a property.
+            ZoomVersion = ZoomSDK.Instance.GetVersion(Application.Context) ?? "";
             ZoomInitStatus = ZoomInitStatus.Success;
             //Add listeners according to your needs
             //ZoomSDK.Instance.InMeetingService.AddListener(new YourInMeetingServiceListener());
@@ -87,8 +139,8 @@ public class DroidZoomSDKService
         }
         else
         {
+            LastError = $"init error {errorCode} ({DescribeInitError(errorCode)})";
             ZoomInitStatus = ZoomInitStatus.Failed;
-            // something bad happened
         }
     }
 }

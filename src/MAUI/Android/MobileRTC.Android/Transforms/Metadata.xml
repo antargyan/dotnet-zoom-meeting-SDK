@@ -30,7 +30,7 @@
     <attr name="managedName" path="/api/package[@name='com.zipow.videobox.common.user']/class[@name='PTUserProfile']/method[@name='z' and count(parameter)=0]">Newz</attr>
     <attr name="managedName" path="/api/package[@name='com.zipow.videobox.common.user']/class[@name='PTUserSetting']/method[@name='Z' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">NewZ</attr>
     <attr name="managedName" path="/api/package[@name='com.zipow.videobox.common.user']/class[@name='PTUserSetting']/method[@name='a' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">NewA</attr>
-    <attr name="managedName" path="/api/package[@name='com.zipow.videobox.common.user']/class[@name='PTUserSetting']/method[@name='a' and count(parameter)=6 and parameter[1][@type='java.util.List&lt;java.lang.String>'] and parameter[2][@type='java.util.List&lt;java.lang.String>'] and parameter[3][@type='int'] and parameter[4][@type='java.util.List&lt;java.lang.String>'] and parameter[5][@type='java.util.List&lt;java.lang.String>'] and parameter[6][@type='java.lang.String']]">NewA</attr>
+    <attr name="managedName" path="/api/package[@name='com.zipow.videobox.common.user']/class[@name='PTUserSetting']/method[@name='a' and count(parameter)=6 and parameter[1][@type='java.util.List&lt;java.lang.String&gt;'] and parameter[2][@type='java.util.List&lt;java.lang.String&gt;'] and parameter[3][@type='int'] and parameter[4][@type='java.util.List&lt;java.lang.String&gt;'] and parameter[5][@type='java.util.List&lt;java.lang.String&gt;'] and parameter[6][@type='java.lang.String']]">NewA</attr>
     <attr name="managedName" path="/api/package[@name='com.zipow.videobox.common.user']/class[@name='PTUserSetting']/method[@name='a0' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">NewA0</attr>
     <attr name="managedName" path="/api/package[@name='com.zipow.videobox.common.user']/class[@name='PTUserSetting']/method[@name='b' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">NewB</attr>
     <attr name="managedName" path="/api/package[@name='com.zipow.videobox.common.user']/class[@name='PTUserSetting']/method[@name='b0' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">NewB0</attr>
@@ -202,7 +202,7 @@
     <attr name="managedName" path="/api/package[@name='us.zoom.sdk']/interface[@name='InMeetingQAController.InMeetingQAListener']">IInMeetingQAControllerInMeetingQAListener</attr>
     <attr name="managedName" path="/api/package[@name='us.zoom.sdk']/interface[@name='InMeetingRemoteController.InMeetingRemoteControlListener']">IInMeetingRemoteControllerInMeetingRemoteControlListener</attr>
     <attr name="managedName" path="/api/package[@name='us.zoom.sdk']/interface[@name='InMeetingService']">IInMeetingService</attr>
-    <attr name="managedName" path="/api/package[@name='us.zoom.sdk']/interface[@name='InMeetingServiceListener']/method[@name='onSpotlightVideoChanged' and count(parameter)=1 and parameter[1][@type='java.util.List&lt;java.lang.Long>']]">OnSpotlightVideoChangedList</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.sdk']/interface[@name='InMeetingServiceListener']/method[@name='onSpotlightVideoChanged' and count(parameter)=1 and parameter[1][@type='java.util.List&lt;java.lang.Long&gt;']]">OnSpotlightVideoChangedList</attr>
   <attr name="managedName" path="/api/package[@name='us.zoom.sdk']/interface[@name='InMeetingServiceListener']/method[@name='onCameraControlRequestResult' and count(parameter)=2 and parameter[1][@type='long'] and parameter[2][@type='boolean']]">OnCameraControlRequestResultLongBool</attr>  
   <attr name="managedName" path="/api/package[@name='us.zoom.zclips.ui.recording']/class[@name='ZClipsRecordingPageController']/method[@name='a' and count(parameter)=0]">NewA</attr>
     <attr name="managedName" path="/api/package[@name='us.zoom.zclips.ui.recording']/class[@name='ZClipsRecordingPageController']/method[@name='b' and count(parameter)=0]">BoolB</attr>
@@ -345,7 +345,13 @@
     <remove-node path="/api/package[@name='us.zoom.sdk']/interface[@name='NetworkConnectionListener']/implements[@name='us.zoom.proguard.x60']"/>
     <remove-node path="/api/package[@name='us.zoom.sdk']/interface[@name='PhoneHelperListener']/implements[@name='us.zoom.proguard.x60']"/>
     <remove-node path="/api/package[@name='us.zoom.sdk']/interface[@name='SmsListener']/implements[@name='us.zoom.proguard.x60']"/>
-    <remove-node path="/api/package[@name='us.zoom.sdk']/interface[@name='ZoomSDKAuthenticationListener']/method[@name='onNotificationServiceStatus']"/>
+    <!-- REMOVED (was: remove-node of ZoomSDKAuthenticationListener/onNotificationServiceStatus).
+         The method is abstract in the Java interface, so dropping it from the managed interface does
+         not help: the generated Java ACW still must implement it, and javac fails with
+         "ZoomSDKAuthenticationListenerImplementor is not abstract and does not override abstract
+         method onNotificationServiceStatus". Its first parameter is an enum nested in the interface,
+         which is now bindable via AndroidBoundInterfacesContainTypes=true, so the method binds
+         normally and the rule is no longer needed. -->
     <remove-node path="/api/package[@name='us.zoom.sdk']/interface[@name='ZoomSDKInitializeListener']/implements[@name='us.zoom.proguard.x60']"/>
     <remove-node path="/api/package[@name='us.zoom.sdk']/interface[@name='ZoomUIService']"/>
     <remove-node path="/api/package[@name='us.zoom.switchscene.datasource']/class[@name='BaseActivityLifecycleDataSorce']"/>
@@ -368,6 +374,417 @@
     <remove-node path="/api/package[@name='us.zoom.zmsg.view.adapter.composeBox.adapter']/class[@name='CustomizeShortcutsAdapter']"/>
     <remove-node path="/api/package[@name='us.zoom.zmsg.view.mm']/class[@name='MMMessageItem']"/>
     <remove-node path="/api/package[@name='us.zoom.zmsg.view.mm']/class[@name='MMThreadsRecyclerView']"/>
+
+    <!-- ================= Meeting SDK 7.1.6.41900 ================= -->
+
+    <!-- ViewBinding plumbing for Zoom's own layouts (~1990 generated classes). Java allows a
+         covariant getRoot() return type, C# does not, so every one of these fails CS0738:
+         'XxxBinding.Root' cannot implement 'IViewBinding.Root'. None of it is public SDK API
+         (nothing in us.zoom.sdk references these types), so drop the whole package. -->
+    <remove-node path="/api/package[@name='us.zoom.videomeetings.databinding']"/>
+
+    <!-- Internal UI controllers/fragments whose obfuscated members collide once mapped to PascalCase
+         (e.g. Java a0() and A0() both become A0), producing CS0111/CS0533/CS0534/CS0508.
+         Not public SDK API - removed rather than adding dozens of managedName rules. -->
+    <remove-node path="/api/package[@name='us.zoom.meeting.inperson.controller']/class[@name='ZmPersonalMeetingPageController']"/>
+    <remove-node path="/api/package[@name='us.zoom.premeeting.controller']/class[@name='ZmPreMeetingController']"/>
+    <remove-node path="/api/package[@name='us.zoom.zmsg.fragment.comm']/class[@name='MMCommMsgListFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.hybridsdk.host.export']/class[@name='HybridSDKConfService']"/>
+
+    <!-- Overrides that the generator emits as public over a protected base member (CS0507).
+         The three renderer lifecycle methods are declared 6 times each across the whole API and are
+         protected on every base, so fix them as a family instead of per class. -->
+    <attr name="visibility" path="/api/package/class/method[@name='onRelease']">protected</attr>
+    <attr name="visibility" path="/api/package/class/method[@name='onStopRunning']">protected</attr>
+    <attr name="visibility" path="/api/package/class/method[@name='onGLSurfaceSizeChanged']">protected</attr>
+    <!-- Obfuscated single-letter overrides: must stay per class, since 'b'/'d' as a global rule
+         would hit thousands of unrelated members. -->
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.view.schedule']/class[@name='ZmScheduleSelectCMCOptionView']/method[@name='b']">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.aicplus.conf.dialog.receive']/class[@name='ZmAicReceiveRequestToStartSummaryMsgDialogFragment']/method[@name='d']">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.aicplus.conf.dialog.turnoff']/class[@name='ZmAicTurnOnAgainFeaturesDialogFragment']/method[@name='d']">protected</attr>
+
+    <!-- Java packages named 'delegate' become a managed namespace 'Delegate' that shadows
+         System.Delegate for every sibling namespace, breaking the generator's own marshalling
+         fields with CS0118 ('Delegate' is a namespace but is used like a type). -->
+    <attr name="managedName" path="/api/package[@name='com.zipow.videobox.conference.ui.share.delegate']">Com.Zipow.Videobox.Conference.UI.Share.Delegates</attr>
+    <attr name="managedName" path="/api/package[@name='com.zipow.videobox.conference.ui.container.control.meetingstatus.delegate']">Com.Zipow.Videobox.Conference.UI.Container.Control.Meetingstatus.Delegates</attr>
+    <attr name="managedName" path="/api/package[@name='com.zipow.videobox.ptapp.delegate']">Com.Zipow.Videobox.Ptapp.Delegates</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.unite.delegate']">US.Zoom.Unite.Delegates</attr>
+
+    <!-- getTag() returns String here but View.getTag() returns Object, which C# cannot narrow
+         on override (CS1715). Internal renderer view - drop the accessor. -->
+    <remove-node path="/api/package[@name='us.zoom.corekit.capability.renderer.view']/class[@name='ZmAbsRendererView']/method[@name='getTag' and count(parameter)=0]"/>
+
+    <!-- Parcelable.Creator implementations with covariant createFromParcel/newArray return types
+         (CS0738). Drop the creators; the Java side still uses them at runtime via JNI.
+         Done as a family rule rather than per type - there are only 9 nested creators in the whole
+         API, and enumerating them one release at a time just costs another build round. -->
+    <remove-node path="/api/package/class[contains(@name,'.Creator')]"/>
+    <remove-node path="/api/package/class[contains(@name,'.CREATOR')]"/>
+
+    <!-- Internal fragments/adapters/view models with unimplementable abstract members (CS0534)
+         or obfuscated member collisions (CS0111). -->
+    <remove-node path="/api/package[@name='com.zipow.videobox.confapp.meeting.scene.uservideo']/class[@name='ZmGalleryRecyclerAdapter']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.login.fragment']/class[@name='ZmMagicCodeLoginFragment']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.login.fragment']/class[@name='ZmPasskeyLoginFragment']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.login.fragment']/class[@name='ZmPasswordLoginFragment']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.fragment']/class[@name='IMMyMeetingsFragment']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.fragment.profile']/class[@name='MyProfileV2Fragment']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.util']/class[@name='NotificationMgr']"/>
+    <remove-node path="/api/package[@name='us.zoom.android.navigation']/class[@name='ZmNavigationParentFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.captions.ui']/class[@name='ZmCaptionSelectLanguageViewModel']"/>
+    <remove-node path="/api/package[@name='us.zoom.captions.ui']/class[@name='ZmCaptionsSettingViewModel']"/>
+    <remove-node path="/api/package[@name='us.zoom.common.setting.audio']/class[@name='AudioSettingHelper']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.businessline.meeting.feature.captions']/class[@name='ZmCaptionApi']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.businessline.meeting.feature.hosttools.controller']/class[@name='ZmHostToolsSecurityPageController']"/>
+
+    <!-- Schedule/PMI fragments: every override of the obfuscated protected members on their base
+         fragments comes out public (CS0507). Internal scheduling UI - removed wholesale rather than
+         ~20 per-method visibility rules. -->
+    <remove-node path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmPMIEditFragment']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmScheduleFragment']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmScheduleDialogFragment']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmTabletPMIEditFragment']"/>
+    <!-- Classes whose obfuscated members collide once PascalCased (Java a() and A() both become
+         A()), producing CS0111. Enumerated by analysing api.xml rather than harvesting them from
+         compiler output a wave at a time: 366 classes in the API contain such collisions, of which
+         these 58 are actually emitted. All are internal (chat UI, zphone/PBX, internal JNI helpers,
+         video effects); none are in us.zoom.sdk, and the 53 transitive descendants that go with
+         them are internal too. -->
+    <remove-node path="/api/package[@name='com.zipow.videobox.dialog.conf']/class[@name='ZmHostToolsUtils']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.fragment']/class[@name='VerifyCertFailureDialog']"/>
+    <remove-node path="/api/package[@name='com.zipow.videobox.view.schedule']/class[@name='ZMMeetingSecurityOptionLayout']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.businessline.meeting.feature.multiinst.createbo.controller']/class[@name='ZmCreateBOPageController']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.businessline.meeting.feature.sharescreen.view']/class[@name='ShareScreenFuncBar']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.businessline.meeting.layout.common.controller']/class[@name='ZmMeetingTipPageController']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.features.chat.UI.comments']/class[@name='MMCommentsRecyclerView']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.features.chat.UI.fragment']/class[@name='MMCommentsFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.features.chat.UI.fragment']/class[@name='MMThreadsFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.features.chat.UI.model']/class[@name='SessionModel']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.meetingsdk.jni.aiinterpreter']/class[@name='ZmAIInterpreterNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.meetingsdk.jni.meeting']/class[@name='ZmConfContextNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.meetingsdk.jni.meeting']/class[@name='ZmConfInstNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.meetingsdk.jni.meeting']/class[@name='ZmConfStatusNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.meetingsdk.jni.user']/class[@name='ZmUserNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.meetingsdk.jni.video']/class[@name='ZmVideoSessionNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.messagesdk.jni.buddy']/class[@name='ZoomBuddyNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.messagesdk.jni.chat']/class[@name='ZmChatGroupNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.messagesdk.jni.chat']/class[@name='ZmChatMessageNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.messagesdk.jni.chat']/class[@name='ZmChatSessionNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.messagesdk.jni.file']/class[@name='ZoomFileNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.sdk.messagesdk.jni.message']/class[@name='ZmMessengerNative']"/>
+    <remove-node path="/api/package[@name='us.zoom.feature.videoeffects.ui']/class[@name='ZmVideoEffectsHomePageController']"/>
+    <remove-node path="/api/package[@name='us.zoom.internal.jni.helper']/class[@name='ZoomMeetingSDKAICompanionHelper']"/>
+    <remove-node path="/api/package[@name='us.zoom.internal.jni.helper']/class[@name='ZoomMeetingSDKMeetingHelper']"/>
+    <remove-node path="/api/package[@name='us.zoom.zimmsg.fragment']/class[@name='ZmIMChatInputFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zimmsg.teamchat.viewmodel']/class[@name='TabBarViewModel']"/>
+    <remove-node path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='ZmMeetingChatInputFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zmsg.fragment']/class[@name='MMChatInputFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zmsg.fragment']/class[@name='MMCommonMsgFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zmsg.fragment']/class[@name='MMThreadsFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zmsg.view.mm']/class[@name='MMCommentsFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zmsg.view.mm']/class[@name='MMCommentsRecyclerView']"/>
+    <remove-node path="/api/package[@name='us.zoom.zmsg.view.mm']/class[@name='MMContentFileViewerFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zmsg.view.mm']/class[@name='MMSlashCommandPopupView']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.server']/class[@name='CmmSIPCallManager']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx']/class[@name='CmmSIPMessageManager']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx']/class[@name='CmmSIPNosManager']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.history']/class[@name='CmmCallLog']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ptt']/class[@name='CmmPttManager']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.server']/class[@name='CmmSIPCallHistoryItem']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.server']/class[@name='CmmSIPLineCallItem']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.server']/class[@name='CmmSIPVoiceMailItem']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.server']/class[@name='IDataService']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.server']/class[@name='IPBXModule']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.server']/class[@name='ISIPLineMgrAPI']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui']/class[@name='PhonePBXSmsFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui']/class[@name='PhonePBXTabFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui']/class[@name='PhonePBXVoiceMailListView']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui.cellular']/class[@name='PbxCellularCompanionMgr']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui.efax']/class[@name='PBXFaxCreateViewModel']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui.efax']/class[@name='PBXFaxHistoryFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui.history']/class[@name='PhonePBXHistoryNewViewModel']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui.sms']/class[@name='ZmPhoneChatInputFragmentBase']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpsi']/class[@name='CmmPSINosManager']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpsi.ui']/class[@name='PSIPhoneCallBaseFragment']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpsi.ui.mitel']/class[@name='MitelVoicemailDetailViewModel']"/>
+    <remove-node path="/api/package[@name='us.zoom.zspaces.view']/class[@name='ZRCFragment']"/>
+
+    <!-- us.zoom.zmsg.viewmodel.helper.MaxSizeList moved to us.zoom.component.features.chat.UI.helper
+         in 7.1.6; size() must stay non-final or the generated override fails (CS0115). The rule for
+         the old location is kept - the class still exists there too. -->
+    <attr name="final" path="/api/package[@name='us.zoom.component.features.chat.UI.helper']/class[@name='MaxSizeList']/method[@name='size' and count(parameter)=0]">false</attr>
+    <!-- Overrides that widen visibility (legal in Java, CS0507 in C#). -->
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='grantLocalLiveStreamPrivilege' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.ConfAppProtos.ReqLocalLiveStreamParam'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='isAudioAvailableOnVPWhenJoinMeetingImpl' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='isIAudioAvailableOnCallOutImpl' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='isIVideoAvailableOnCallOutImpl' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='isPresetAudioAvailableOnWFHImpl' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='isPresetAudioAvailableOnWRImpl' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='isPresetVideoAvailableOnWFHImpl' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='isPresetVideoAvailableOnWRImpl' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='isPutInWRByManualImpl' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='rejectLocalLiveStreamPrivilege' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.ConfAppProtos.ReqLocalLiveStreamParam'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='requestILiveURLImpl' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='updateICallingOutAudioVideoState' and count(parameter)=4 and parameter[1][@type='boolean'] and parameter[2][@type='boolean'] and parameter[3][@type='boolean'] and parameter[4][@type='boolean']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='userConfirmPresetAudioOnWFHImpl' and count(parameter)=1 and parameter[1][@type='boolean']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='userConfirmPresetAudioOnWRImpl' and count(parameter)=1 and parameter[1][@type='boolean']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='userConfirmPresetVideoOnWFHImpl' and count(parameter)=1 and parameter[1][@type='boolean']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp']/class[@name='ConfMgr']/method[@name='userConfirmPresetVideoOnWRImpl' and count(parameter)=1 and parameter[1][@type='boolean']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp.meeting.immersive']/class[@name='ZmImmersiveFragmentImplNew']/method[@name='onRealPause' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp.meeting.immersive']/class[@name='ZmImmersiveFragmentImplNew']/method[@name='onRealResume' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp.meeting.scene']/class[@name='ZmBaseRenderScrollItemView']/method[@name='onGLSurfaceSizeChanged' and count(parameter)=2 and parameter[1][@type='int'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp.meeting.scene.share']/class[@name='ZmUserShareView']/method[@name='onRelease' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp.meeting.scene.uservideo']/class[@name='ZmScrollableGalleryItemView']/method[@name='getDisplayUsers' and count(parameter)=2 and parameter[1][@type='int'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp.meeting.scene.uservideo']/class[@name='ZmSignLanguageGalleryItemView']/method[@name='getDisplayUsers' and count(parameter)=2 and parameter[1][@type='int'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp.proctoring']/class[@name='ZmBaseRenderGalleryItemView']/method[@name='onGLSurfaceSizeChanged' and count(parameter)=2 and parameter[1][@type='int'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.confapp.proctoring']/class[@name='ZmProctoringGalleryItemView']/method[@name='getDisplayShareSource' and count(parameter)=2 and parameter[1][@type='int'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.conference.jni']/class[@name='ZmConfDefaultCallback']/method[@name='getTag' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.conference.ui.fragment.main']/class[@name='ZmBaseThumbSceneFragment']/method[@name='onRealResume' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.conference.ui.fragment.main']/class[@name='ZmProductionStudioViewerFragment']/method[@name='onRealResume' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmPMIEditFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.ApproveOrBlockRegionsOptionParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmPMIEditFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.AudioOptionParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmPMIEditFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.DataRegionsParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmPMIEditFragment']/method[@name='c' and count(parameter)=1 and parameter[1][@type='us.zoom.business.model.SelectContactsParamter']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmScheduleFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.ApproveOrBlockRegionsOptionParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmScheduleFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.AudioOptionParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmScheduleFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.DataRegionsParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmScheduleFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.ptapp.TemplateItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmScheduleFragment']/method[@name='c' and count(parameter)=1 and parameter[1][@type='us.zoom.business.model.SelectContactsParamter']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmScheduleFragment']/method[@name='c' and count(parameter)=3 and parameter[1][@type='boolean'] and parameter[2][@type='int'] and parameter[3][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.schedule']/class[@name='ZmScheduleFragment']/method[@name='d' and count(parameter)=1 and parameter[1][@type='android.os.Bundle']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmScheduleDialogFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.ApproveOrBlockRegionsOptionParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmScheduleDialogFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.AudioOptionParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmScheduleDialogFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.DataRegionsParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmScheduleDialogFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.ptapp.TemplateItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmScheduleDialogFragment']/method[@name='c' and count(parameter)=1 and parameter[1][@type='us.zoom.business.model.SelectContactsParamter']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmScheduleDialogFragment']/method[@name='c' and count(parameter)=3 and parameter[1][@type='boolean'] and parameter[2][@type='int'] and parameter[3][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmScheduleDialogFragment']/method[@name='d' and count(parameter)=1 and parameter[1][@type='android.os.Bundle']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmTabletPMIEditFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.ApproveOrBlockRegionsOptionParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmTabletPMIEditFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.AudioOptionParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmTabletPMIEditFragment']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.meeting.DataRegionsParcelItem'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.fragment.tablet.schedule']/class[@name='ZmTabletPMIEditFragment']/method[@name='c' and count(parameter)=1 and parameter[1][@type='us.zoom.business.model.SelectContactsParamter']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.login']/class[@name='ZmMultiFactorAuthTryAnotherBottomSheet']/method[@name='onGetContentView' and count(parameter)=2 and parameter[1][@type='android.view.LayoutInflater'] and parameter[2][@type='android.view.ViewGroup']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.mainboard.module']/class[@name='ZmConfMainBoard']/method[@name='loadNativeModules' and count(parameter)=1 and parameter[1][@type='com.zipow.videobox.mainboard.module.ZmLoadParam']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.mainboard.module']/class[@name='ZmConfMainBoard']/method[@name='loadResource' and count(parameter)=1 and parameter[1][@type='com.zipow.videobox.mainboard.module.ZmLoadParam']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.mainboard.module']/class[@name='ZmPTMainBoard']/method[@name='loadNativeModules' and count(parameter)=1 and parameter[1][@type='com.zipow.videobox.mainboard.module.ZmLoadParam']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.mainboard.module']/class[@name='ZmZclipsMainBoard']/method[@name='loadNativeModules' and count(parameter)=1 and parameter[1][@type='com.zipow.videobox.mainboard.module.ZmLoadParam']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.mainboard.module']/class[@name='ZmZclipsMainBoard']/method[@name='loadResource' and count(parameter)=1 and parameter[1][@type='com.zipow.videobox.mainboard.module.ZmLoadParam']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.push.strategy']/class[@name='ZMPushMeetingStrategyOld']/method[@name='isNeedRecoveryToAutoLogin' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.push.strategy']/class[@name='ZMPushPhoneMessageStrategy']/method[@name='isNeedRecoveryToAutoLogin' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.push.strategy']/class[@name='ZMPushReminderStrategy']/method[@name='isNeedRecoveryToAutoLogin' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.view.ptvideo']/class[@name='ZmPtCameraView']/method[@name='onGLSurfaceSizeChanged' and count(parameter)=2 and parameter[1][@type='int'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.view.ptvideo']/class[@name='ZmPtCameraView']/method[@name='onRelease' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.view.ptvideo']/class[@name='ZmPtCameraView']/method[@name='onStopRunning' and count(parameter)=1 and parameter[1][@type='boolean']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.view.schedule']/class[@name='ZMScheduleMeetingOptionLayout']/method[@name='a' and count(parameter)=1 and parameter[1][@type='com.zipow.videobox.view.ScheduledMeetingItem']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.view.schedule']/class[@name='ZMScheduleMeetingOptionLayout']/method[@name='f' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.view.schedule']/class[@name='ZmScheduleSelectCMCOptionView']/method[@name='b' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='com.zipow.videobox.view.video']/class[@name='ZmBaseThumbnailRenderView']/method[@name='onStopRunning' and count(parameter)=1 and parameter[1][@type='boolean']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.aicplus.conf.dialog.receive']/class[@name='ZmAicReceiveRequestToStartSummaryMsgDialogFragment']/method[@name='d' and count(parameter)=1 and parameter[1][@type='android.os.Bundle']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.aicplus.conf.dialog.turnoff']/class[@name='ZmAicTurnOnAgainFeaturesDialogFragment']/method[@name='d' and count(parameter)=1 and parameter[1][@type='android.os.Bundle']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.common.meeting.render.views']/class[@name='ZmSingleCameraSubscribingView']/method[@name='onRelease' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.common.meeting.render.views']/class[@name='ZmSingleCameraSubscribingView']/method[@name='onStopRunning' and count(parameter)=1 and parameter[1][@type='boolean']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.component.features.chat.UI.fragment']/class[@name='MMCommentsFragment']/method[@name='L3' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.component.features.chat.UI.fragment']/class[@name='MMCommentsFragment']/method[@name='P3' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.docs.ui']/class[@name='c']/method[@name='a' and count(parameter)=1 and parameter[1][@type='V']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.docs.ui.share']/class[@name='ZoomDocsShareFragment']/method[@name='getTAG' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.meeting.multitasking.controller.ui']/class[@name='ZmMultitaskingViewContainer']/method[@name='k' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='a']/method[@name='a' and count(parameter)=2 and parameter[1][@type='android.view.ViewGroup'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='a']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.CmmUser'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='a']/method[@name='f' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='a']/method[@name='g' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='a']/method[@name='i' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='b']/method[@name='a' and count(parameter)=2 and parameter[1][@type='android.view.ViewGroup'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='b']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.CmmUser'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='b']/method[@name='f' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='b']/method[@name='g' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='b']/method[@name='i' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='c']/method[@name='a' and count(parameter)=2 and parameter[1][@type='android.view.ViewGroup'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='c']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.CmmUser'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='c']/method[@name='f' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='c']/method[@name='g' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='c']/method[@name='i' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='d']/method[@name='a' and count(parameter)=2 and parameter[1][@type='android.view.ViewGroup'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='d']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.CmmUser'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='d']/method[@name='f' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='d']/method[@name='g' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='d']/method[@name='i' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='e']/method[@name='a' and count(parameter)=2 and parameter[1][@type='android.view.ViewGroup'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='e']/method[@name='a' and count(parameter)=2 and parameter[1][@type='com.zipow.videobox.confapp.CmmUser'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='e']/method[@name='f' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='e']/method[@name='g' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.plist.newplist.adapter']/class[@name='e']/method[@name='i' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='ed3']/method[@name='j' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='ed3']/method[@name='l' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='f08']/method[@name='NotifyIMWebSettingUpdatedImpl' and count(parameter)=1 and parameter[1][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='f08']/method[@name='checkIfShouldCall' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='f08']/method[@name='getMessengerInst' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='f08']/method[@name='showMessageNotificationMM' and count(parameter)=2 and parameter[1][@type='boolean'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='f08']/method[@name='showMessageNotificationMM' and count(parameter)=3 and parameter[1][@type='boolean'] and parameter[2][@type='java.lang.String'] and parameter[3][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='ge0']/method[@name='f' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='ge0']/method[@name='h' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='gi3']/method[@name='b' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='gk7']/method[@name='d' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='hm5']/method[@name='C' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='hm5']/method[@name='K' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='iu8']/method[@name='u0' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='lo1']/method[@name='A' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='lo1']/method[@name='k' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='lo1']/method[@name='l' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='lo1']/method[@name='o' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='lo1']/method[@name='r' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='lo1']/method[@name='y' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='ng3']/method[@name='b' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='oc']/method[@name='c' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='og3']/method[@name='b' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='qo3']/method[@name='A' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='qo3']/method[@name='k' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='qo3']/method[@name='l' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='qo3']/method[@name='o' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='qo3']/method[@name='r' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='qo3']/method[@name='y' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='rv5']/method[@name='C' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='rv5']/method[@name='K' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='tg3']/method[@name='j' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='tg3']/method[@name='l' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='uh3']/method[@name='b' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='vd4.c']/method[@name='a' and count(parameter)=2 and parameter[1][@type='java.util.List&lt;us.zoom.proguard.wd4&gt;'] and parameter[2][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='vf8']/method[@name='c' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='vv5']/method[@name='C' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='vv5']/method[@name='K' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='w38']/method[@name='u0' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='yc3.a']/method[@name='a' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='yc3.b']/method[@name='a' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='yc3.c']/method[@name='a' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='yc3.d']/method[@name='a' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='yc3.e']/method[@name='a' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='yc3.f']/method[@name='a' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='yc3.g']/method[@name='a' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='yc3.h']/method[@name='a' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='yc3.j']/method[@name='a' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='zo0']/method[@name='a' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='zp7']/method[@name='NotifyIMWebSettingUpdatedImpl' and count(parameter)=1 and parameter[1][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='zp7']/method[@name='checkIfShouldCall' and count(parameter)=1 and parameter[1][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='zp7']/method[@name='getMessengerInst' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='zp7']/method[@name='getMessengerUIListenerMgr' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='zp7']/method[@name='getTag' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='zp7']/method[@name='showMessageNotificationMM' and count(parameter)=2 and parameter[1][@type='boolean'] and parameter[2][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='zp7']/method[@name='showMessageNotificationMM' and count(parameter)=3 and parameter[1][@type='boolean'] and parameter[2][@type='java.lang.String'] and parameter[3][@type='java.lang.String']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.proguard']/class[@name='zz0']/method[@name='c' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.sdk']/class[@name='MinMeetingView']/method[@name='getVideoViewMgr' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zapp.internal.jni']/class[@name='ZmChatApp']/method[@name='featureFlag' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zapp.internal.jni']/class[@name='ZmPhoneApp']/method[@name='featureFlag' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zimmsg.chats']/class[@name='IMThreadsFragment']/method[@name='a' and count(parameter)=5 and parameter[1][@type='android.view.View'] and parameter[2][@type='int'] and parameter[3][@type='us.zoom.proguard.rf3'] and parameter[4][@type='java.lang.String'] and parameter[5][@type='java.lang.CharSequence']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zimmsg.filecontent']/class[@name='MMContentSearchFilesListView']/method[@name='e' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zimmsg.fragment']/class[@name='IMCustomEmojiSettingFragment']/method[@name='getMessengerInst' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zimmsg.fragment']/class[@name='ZmIMChatInputFragment']/method[@name='F' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='MeetingCommentsFragment.e']/method[@name='p' and count(parameter)=1 and parameter[1][@type='us.zoom.proguard.rf3']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='MeetingCommentsFragment.e']/method[@name='y' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='MeetingCommentsFragment.f']/method[@name='p' and count(parameter)=1 and parameter[1][@type='us.zoom.proguard.rf3']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='MeetingCommentsFragment.f']/method[@name='z' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='MeetingCustomEmojiSettingFragment']/method[@name='getMessengerInst' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='MeetingThreadsFragment']/method[@name='a' and count(parameter)=5 and parameter[1][@type='android.view.View'] and parameter[2][@type='int'] and parameter[3][@type='us.zoom.proguard.rf3'] and parameter[4][@type='java.lang.String'] and parameter[5][@type='java.lang.CharSequence']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='MeetingThreadsFragment.a']/method[@name='p' and count(parameter)=1 and parameter[1][@type='us.zoom.proguard.rf3']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='MeetingThreadsFragment.a']/method[@name='y' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='MeetingThreadsFragment.b']/method[@name='p' and count(parameter)=1 and parameter[1][@type='us.zoom.proguard.rf3']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='MeetingThreadsFragment.b']/method[@name='z' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='ZmMeetingNormalChatInputFragment']/method[@name='o' and count(parameter)=1 and parameter[1][@type='long']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmeetingmsg.fragment']/class[@name='ZmMeetingWebinarChatInputFragment']/method[@name='o' and count(parameter)=1 and parameter[1][@type='long']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmsg.dataflow.viewbean']/class[@name='MMTextBean']/method[@name='b' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmsg.fragment']/class[@name='MMThreadsFragment']/method[@name='finishFragment' and count(parameter)=1 and parameter[1][@type='boolean']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmsg.fragment']/class[@name='MMThreadsFragment']/method[@name='j4' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmsg.view']/class[@name='SimpleContextMenuDialog']/method[@name='b' and count(parameter)=1 and parameter[1][@type='int']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmsg.view.mm']/class[@name='MMCommentsFragment']/method[@name='j4' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zmsg.view.mm']/class[@name='MMCommentsFragment']/method[@name='q4' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zphone.zpbx.ui']/class[@name='PBXInCallActivity']/method[@name='isCurrentCallInRinging' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zphone.zpbx.ui.sms']/class[@name='PBXMessageMultipleReceiveView']/method[@name='a' and count(parameter)=1 and parameter[1][@type='java.util.List&lt;us.zoom.zphone.zpbx.ui.sms.e&gt;']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zphone.zpbx.ui.sms']/class[@name='PBXMessageMultipleSendView']/method[@name='a' and count(parameter)=1 and parameter[1][@type='java.util.List&lt;us.zoom.zphone.zpbx.ui.sms.e&gt;']]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zphone.zpsi.ui']/class[@name='PSIInCallActivity']/method[@name='isCurrentCallInRinging' and count(parameter)=0]">protected</attr>
+    <attr name="visibility" path="/api/package[@name='us.zoom.zphone.zpsi.ui']/class[@name='PSIInCallActivity']/method[@name='updateUI' and count(parameter)=0]">protected</attr>
+
+    <!-- Java packages under us.zoom.android.* map to a managed namespace US.Zoom.Android, which
+         shadows the global Android namespace for every US.Zoom.* type - so a generated reference to
+         Android.Graphics.SurfaceTexture resolves to US.Zoom.Android.Graphics and fails with CS0234.
+         Same shape of bug as the 'delegate' packages above. -->
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.audiomanager']">US.Zoom.AndroidLib.Audiomanager</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.audiomanager.audiodevice']">US.Zoom.AndroidLib.Audiomanager.Audiodevice</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.camera_capture.internal']">US.Zoom.AndroidLib.CameraCapture.Internal</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.camera_capture.internal.manager']">US.Zoom.AndroidLib.CameraCapture.Internal.Manager</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.camera_capture.internal.wrapper']">US.Zoom.AndroidLib.CameraCapture.Internal.Wrapper</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.camera_capture.model']">US.Zoom.AndroidLib.CameraCapture.Model</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.flexbox']">US.Zoom.AndroidLib.Flexbox</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.navigation']">US.Zoom.AndroidLib.Navigation</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.network.config']">US.Zoom.AndroidLib.Network.Config</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.network.converter']">US.Zoom.AndroidLib.Network.Converter</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.network.core']">US.Zoom.AndroidLib.Network.Core</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.network.exception']">US.Zoom.AndroidLib.Network.Exception</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.screen_capture.base']">US.Zoom.AndroidLib.ScreenCapture.Base</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.screen_capture.core']">US.Zoom.AndroidLib.ScreenCapture.Core</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.screen_capture.core.reader']">US.Zoom.AndroidLib.ScreenCapture.Core.Reader</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.spi.core']">US.Zoom.AndroidLib.Spi.Core</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.android.spi.core.annotation']">US.Zoom.AndroidLib.Spi.Core.Annotation</attr>
+
+    <!-- size() is final on these java.util.ArrayList/LinkedList subclasses, and the generator
+         renames the override to InvokeSize() because 'Size' collides with the inherited property,
+         leaving it overriding nothing (CS0115). final=false does not help - the declaration has to
+         go; managed callers use the inherited Count/Size instead. -->
+    <remove-node path="/api/package[@name='us.zoom.component.features.chat.UI.helper']/class[@name='MaxSizeList']/method[@name='size' and count(parameter)=0]"/>
+    <remove-node path="/api/package[@name='us.zoom.uicommon.widget.recyclerview']/class[@name='ExtendArrayList']/method[@name='size' and count(parameter)=0]"/>
+    <remove-node path="/api/package[@name='us.zoom.zimmsg.teamchat.more']/class[@name='MonitorList']/method[@name='size' and count(parameter)=0]"/>
+
+    <!-- Remaining internal types the generator cannot emit legally: adapters that never get their
+         abstract BaseAdapter/RecyclerView.Adapter members, PSI module interfaces missing IPSIModule.J(),
+         a JSON deserializer that does not satisfy IJsonDeserializer, and one more name collision. -->
+    <remove-node path="/api/package[@name='us.zoom.component.features.chat.UI.thread.input']/class[@name='CommandEditText']"/>
+    <remove-node path="/api/package[@name='us.zoom.component.features.fusion.protocol.parser']/class[@name='LayoutNodeTypeAdapter']"/>
+    <remove-node path="/api/package[@name='us.zoom.telemetry.jni']/class[@name='TelemetryCacheManager']"/>
+    <remove-node path="/api/package[@name='us.zoom.zimmsg.teamchat.drafts.adapter']/class[@name='IMDraftsRecyclerViewAdapter']"/>
+    <remove-node path="/api/package[@name='us.zoom.zimmsg.teamchat.draftsV2.adapter']/class[@name='IMDraftsRecyclerViewAdapter']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui']/class[@name='ContactPBXNumberAdapter']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui']/class[@name='PBXDirectorySearchAdapter']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui']/class[@name='ZoomSipPhoneAdapter']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui.sms']/class[@name='PBXMessageGroupDirectoryAdapter']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui.sms']/class[@name='SmsScheduleMsgListAdapter']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui.switchcall']/class[@name='SwitchCallAdapter']"/>
+    <remove-node path="/api/package[@name='us.zoom.zphone.zpbx.ui.voicemail.forward']/class[@name='PBXVoicemailForwardSelectAdapter']"/>
+    <!-- IPSIModule.j() is abstract, but its three subclasses (IAvayaModule, IMitelModule,
+         ISIPIntegrationModule) are final and never implement it, so each fails CS0534. They cannot be
+         marked abstract either - final + abstract is contradictory (CS0418) and the generated Invoker
+         cannot derive from a sealed type (CS0509). Unsealing the base method instead fixes all three
+         with one rule and keeps every type: Java still dispatches j() over JNI at runtime. -->
+    <attr name="abstract" path="/api/package[@name='us.zoom.zphone.zpsi.server']/class[@name='IPSIModule']/method[@name='j' and count(parameter)=0]">false</attr>
+
+    <!-- Java finalize() becomes an override of object.Finalize (CS0249). -->
+    <remove-node path="/api/package[@name='us.zoom.zphone.server']/class[@name='ISIPBaseListenerUI']/method[@name='finalize' and count(parameter)=0]"/>
+    <!-- Java types whose names collide with BCL types the generator emits unqualified in its own
+         scaffolding. us.zoom.unite.jni.Delegate is the one that breaks the build (CS0019: '??=' cannot
+         be applied to 'Delegate' and '_JniMarshal_*', because the marshal fields bind to the Zoom
+         class instead of System.Delegate). The other three are the same shape - 'new Type[]' in
+         [ProtocolMember], Action, Enum - so rename all four rather than wait for each to surface. -->
+    <attr name="managedName" path="/api/package[@name='us.zoom.unite.jni']/class[@name='Delegate']">UniteDelegate</attr>
+    <attr name="managedName" path="/api/package[@name='us.google.protobuf']/class[@name='Type']">ProtobufType</attr>
+    <attr name="managedName" path="/api/package[@name='us.google.protobuf']/class[@name='Enum']">ProtobufEnum</attr>
+    <attr name="managedName" path="/api/package[@name='us.zoom.zmsg.fragment.composebox']/class[@name='Action']">ComposeBoxAction</attr>
+    <!-- ROOT CAUSE of the public API loss in 7.1.6.
+         Zoom's public us.zoom.sdk listener interfaces extend an obfuscated internal interface. That
+         base is unbindable, so the listener becomes invalid, which invalidates IMeetingService /
+         IInMeetingService that take it as a parameter (BG8801), which in turn strips
+         ZoomSDK.GetMeetingService()/GetInMeetingService() of their return types (BG8701) - i.e. the
+         entire entry point of the SDK disappears from the binding.
+         The repo handled this by removing 'implements us.zoom.proguard.x60' from 15 named interfaces.
+         Obfuscated names are regenerated every Zoom release: x60 became wi1 in 7.1.6, so all of those
+         rules silently matched nothing (BG8A00) and the API vanished.
+         Matching on the package prefix instead covers all 32 affected public types today (26 on wi1
+         plus ae1, ae1.a, yp1, zp1, aq1, q45) and will not rot on the next version bump. -->
+    <remove-node path="/api/package[@name='us.zoom.sdk']/interface/implements[starts-with(@name,'us.zoom.proguard.')]"/>
+    <remove-node path="/api/package[@name='us.zoom.sdk']/class/implements[starts-with(@name,'us.zoom.proguard.')]"/>
+    <!-- Java covariant return: IMeetingInviteMenuItem.getAction() returns IMeetingInviteAction while
+         MeetingInviteMenuItem.getAction() returns the nested MeetingInviteAction (which implements
+         IMeetingInviteAction). C# cannot narrow an interface member's return type (CS0738). This only
+         surfaced once the rule above made IMeetingInviteMenuItem bindable again - previously the
+         interface was dropped, so nothing checked the implementation. Widening to the interface type
+         is safe because the nested type implements it. -->
+    <attr name="managedReturn" path="/api/package[@name='us.zoom.sdk']/class[@name='MeetingInviteMenuItem']/method[@name='getAction' and count(parameter)=0]">US.Zoom.Sdk.IMeetingInviteAction</attr>
 </metadata>
 
 

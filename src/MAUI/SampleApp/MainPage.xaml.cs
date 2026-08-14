@@ -18,7 +18,8 @@ namespace SampleApp
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                this.ZoomInitStatusLabel.Text = "ZOOM INIT STATUS: " + zoomSdkService.ZoomInitStatus;
+                this.ZoomInitStatusLabel.Text = "ZOOM INIT STATUS: " + zoomSdkService.ZoomInitStatus
+                    + (string.IsNullOrEmpty(zoomSdkService.LastError) ? "" : $" ({zoomSdkService.LastError})");
                 ZoomVersionLabel.Text = "Zoom Version: " + zoomSdkService.ZoomVersion;
                 StartCallButton.IsEnabled = zoomSdkService.ZoomInitStatus == ZoomInitStatus.Success;
             });
@@ -41,6 +42,9 @@ namespace SampleApp
     {
         ZoomInitStatus ZoomInitStatus { get; set; }
         string ZoomVersion { get; }
+
+        /// <summary>Last init/join failure, so the UI can show why rather than just "Failed".</summary>
+        string LastError { get; set; }
 
         void InitZoomLib(string token);
         Task JoinMeeting(string meetingID, string meetingPassword, string displayName = "Zoom Demo");
