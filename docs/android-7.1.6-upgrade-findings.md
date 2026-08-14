@@ -149,6 +149,38 @@ repo's `SampleApp`, join the same meeting, and check whether the identical `SIGS
 - Cite: SDK version `7.1.6.41900`, device (Nokia G21 / `ShadowcatPlus_00WW`, Android 13,
   `TP1A.220624.014`), the exact backtrace above, and — once run — whether Zoom's own sample
   reproduces it.
+- Use the format the [dev forum FAQ](https://devforum.zoom.us/t/please-read-before-post-troubleshooting-tips-for-zoom-mobile-sdks-faq/4366)
+  asks for: description, SDK version, reproducible steps, screenshots, device info, and error
+  logs/crash analytics. That thread is a submission template, not a troubleshooting checklist — it
+  has no technical content to check against.
+
+### External research already done (don't repeat this)
+
+- **[Get Started docs](https://developers.zoom.us/docs/meeting-sdk/android/get-started/)**: the one
+  native-packaging-relevant line is *"To reduce your app size, include `useLegacyPackaging = true`"*
+  in `build.gradle`. Checked directly by diffing our built APK against Zoom's own Gradle-built sample
+  APK (`unzip -v`, `aapt2 dump xmltree`): both use `Defl:N` compression for every `.so` and both set
+  `android:extractNativeLibs="true"`. Identical — ruled out.
+- **Forum/GitHub search** for the exact crash signature (`Android_InitConfModule4SingleProcess`,
+  `ConfProcessMgrReflection`) turned up no exact match. Closest related reports, and why none apply:
+  - A 5.7.1-era `ClassNotFoundException` from missing ProGuard keep rules
+    ([thread](https://devforum.zoom.us/t/zoom-android-sdk-working-in-debug-apk-but-signed-apk-crashing-when-zoom-activity-start/67433)),
+    staff-confirmed fix = the same `proguard.cfg` keep rules already tried here (see above). Doesn't
+    match: that crash is a managed exception; ours is a pure native SIGSEGV that persists with R8
+    shrinking fully disabled.
+  - A Flutter-wrapper crash on Android 12+, `SecurityException` from missing `READ_PHONE_STATE`
+    ([flutter_zoom_sdk#65](https://github.com/evilrat/flutter_zoom_sdk/issues/65)). Doesn't match: we
+    granted every runtime permission and got the identical native crash anyway.
+  - An AAB/dynamic-module `ClassNotFoundException` at Intent unmarshalling, staff-acknowledged but
+    unresolved ([thread](https://devforum.zoom.us/t/android-dynamic-module-crashes-upon-joining-meeting/112969)).
+    Doesn't match: that's specific to Android App Bundle / Play Feature Delivery packaging; we're
+    testing a plain APK.
+  - Several other join/init crash threads exist but are older SDK versions (5.x) with different
+    (managed-exception) symptoms, not this native signature.
+- **Conclusion**: this specific crash does not appear to be publicly documented or previously
+  reported to Zoom in a way that surfaced in search. That's evidence it's either rare or specific to
+  this exact combination (device/Android 13/SDK 7.1.6/single-process mode) — worth stating plainly in
+  the support ticket rather than assuming Zoom staff will recognize it.
 
 ## Fallback
 
