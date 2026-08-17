@@ -1,50 +1,108 @@
-# Android 7.1.6 upgrade: findings and open issue
+# Android 7.1.6 upgrade: findings
 
-Status as of this writing: the binding compiles, the SDK **initializes** on-device, but
-**joining a meeting crashes** inside Zoom's own native code. This document is the record of what
-was tried, what's ruled out, and what's still open — so the next person (or session) doesn't repeat
-the investigation from zero.
+Status: **solved and verified on-device.** The binding compiles, the SDK initializes, and a meeting
+joins end-to-end (Zoom's real in-meeting UI, mute/video/leave controls, "Waiting for the host to
+start the meeting"). This document records the root cause and everything ruled out on the way, so
+nobody repeats the investigation.
 
 ## Summary
 
 | Stage | Result |
 |---|---|
-| Binding compiles against `mobilertc.7.1.6.41900.aar` | ✅ 0 errors |
-| Public `us.zoom.sdk` API surface | ✅ 298 types (was 240 at 6.1.1), all entry points present |
-| App builds and installs on device (Nokia G21, Android 13, arm64) | ✅ |
-| `ZoomSDK.Initialize` | ✅ `OnZoomSDKInitializeResult errorCode=0` |
-| `JoinMeetingWithParams` | ✅ returns 0 (accepted) |
-| Meeting actually joins | ❌ process crashes ~500ms after join is accepted |
+| Binding compiles against `mobilertc.7.1.6.41900.aar` | OK, 0 errors |
+| Public `us.zoom.sdk` API surface | OK, 298 types (was 240 at 6.1.1) |
+| App builds and installs on device (Nokia G21, Android 13, arm64) | OK |
+| `ZoomSDK.Initialize` | OK, `errorCode=0`, version 7.1.6 (41900) |
+| `JoinMeetingWithParams` | OK, returns 0 |
+| Meeting actually joins | **OK, in-meeting UI reached, 0 crashes** |
 
-## The crash
+## Root cause: null `g_javaVM`, caused by .NET Android changing native library load order
+
+The join crashed with:
 
 ```
-signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0000000000000000
-  #00 libzVideoApp.so
-  #01 libzVideoApp.so
-  #02 libzVideoApp.so
-  #03 libzVideoApp.so
-  #04 libzVideoApp.so
-  #05 libzLoader.so
-  #06 libzLoader.so  Android_InitConfModule4SingleProcess(char*, int, int, char const* const*, bool, bool, bool, bool)+56
-  #07 libzLoader.so  Java_us_zoom_component_sdk_loader_jni_ZmMainboardNative_initConfModule4SingleProcessImpl+484
-  #08 art_jni_trampoline
-  ...
-  #33 libzReflection.so  ConfProcessMgrReflection::CreateConfProcess(int&, char const*)+252
-  #35-44 libzPTApp.so
+signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0
+Cause: null pointer dereference
+  #00-#04 libzVideoApp.so
+  #05-#06 libzLoader.so  Android_InitConfModule4SingleProcess(char*,int,int,char const* const*,bool,bool,bool,bool)+56
+  #07     libzLoader.so  Java_us_zoom_component_sdk_loader_jni_ZmMainboardNative_initConfModule4SingleProcessImpl+484
+  ...     Mainboard.initConfModule4SingleProcess <- ZmSdkMainBoard.createConfAppForSdk
+          <- VideoBoxApplication.startConfServiceForSDK <- ConfProcessMgr.createConfProcess
+          <- ConfProcessMgrReflection.createConfProcess
 ```
 
-Null-pointer dereference (fault addr `0x0`) inside Zoom's own closed-source native library, reached
-via JNI from `Mainboard.initConfModule4SingleProcess`, itself invoked reflectively via
-`ConfProcessMgrReflection::CreateConfProcess`. No managed code, no JNI marshalling, and no code in
-this repo appears anywhere in the backtrace.
+Disassembling the faulting address in `libzVideoApp.so` gives the exact instruction (note frame `+56`
+is the *return address* inside a thunk, not the fault site - the real code is in its callee):
 
-**This exact crash — same function, same offset pattern — was independently reported by the RioConf
-project** (a separate MAUI app with an entirely different AndroidX/Compose dependency graph), which
-concluded 7.x "does not run" and fell back to a 6.4.1 binding. Reproducing it here, with Zoom's own
-declared dependency versions rather than RioConf's raised ones, is evidence against their
-version-skew theory and shifts the likely cause toward Zoom's SDK itself (possibly for this
-device/Android-13 combination, or for single-process mode generally).
+```asm
+adrp x22, #0x1655000
+ldr  x22, [x22, #0x128]   ; GOT slot -> &g_javaVM   (R_AARCH64_GLOB_DAT -> symbol g_javaVM)
+mov  w2, #4
+movk w2, #1, lsl #16      ; w2 = 0x00010004 = JNI_VERSION_1_4
+ldr  x0, [x22]            ; x0 = g_javaVM  == NULL
+ldr  x8, [x0]             ; <-- SIGSEGV, fault addr 0x0
+ldr  x8, [x8, #0x30]      ; JNIInvokeInterface::GetEnv
+blr  x8                   ; GetEnv(vm, &env, JNI_VERSION_1_4); AttachCurrentThread is +0x20
+```
+
+`x2 = 0x10004` in the register dump confirms the read. Zoom's video module calls `GetEnv` on a
+**null `JavaVM*`, with no null check**.
+
+Why it is null:
+
+- `libzVideoApp.so` does **not** define `g_javaVM` - it imports it (`SHN_UNDEF`), resolved at load
+  time through the GOT.
+- **Four** libraries in `mobilertc.aar` each *export* `g_javaVM` with default visibility and each set
+  it from their own `JNI_OnLoad`, also via the GOT:
+  `libcmmlib.so`, `libzReflection.so`, `libzoombase_shared.so`, `libzUnifyWebViewApp.so`.
+- Because the symbol is preemptible and every access is GOT-mediated, **which copy a given reference
+  binds to is decided purely by library load order.**
+- Zoom's own loader deliberately loads `libzReflection.so` early. Verified from the working native
+  sample's logcat: `libc++_shared, libusb-1.0, libuvc, libzoom_util, libzReflection, libcares, ...`
+- **.NET Android 10 preloads every JNI-referenced native library at process start, in alphabetical
+  order** (`dso_jni_preloads_idx` - "Indices into dso_cache[] of DSO libraries to preload because of
+  JNI use" - baked into `libxamarin-app.so`; 156 entries here). Observed order:
+  `libAndroidCameraBridge, libAndroidEasyIPC, libannotate, libcmmlib, libmcm, ... libzReflection`.
+- So `libcmmlib` (c) won interposition instead of `libzReflection` (z), and `libzVideoApp`'s
+  `g_javaVM` bound to a copy nothing initialises. Init succeeds because it never touches this path;
+  the join then dereferences null during conf-module setup.
+
+### The fix
+
+```xml
+<!-- SampleApp.csproj -->
+<AndroidIgnoreAllJniPreload>true</AndroidIgnoreAllJniPreload>
+```
+
+This hands load ordering back to Zoom's own Java loader, exactly as in the working native sample.
+Confirmed: afterwards the log shows `libzReflection.so` loaded first, then `libcmmlib.so`, and the
+join reaches the in-meeting UI with zero crashes.
+
+`$(AndroidIgnoreAllJniPreload)` adds every native library to `@(AndroidNativeLibraryNoJniPreload)`.
+Preloading is only a startup optimisation - libraries still load on demand - so nothing is lost. A
+narrower alternative is to list just the 84 Zoom `.so` names in
+`@(AndroidNativeLibraryNoJniPreload)`, but that must be rechecked on every SDK bump; the global
+switch is what is verified here.
+
+**This is a consumer requirement, not just a sample-app setting.** Any app referencing this binding
+needs it - see the README's Android gotchas.
+
+### Why this also explains RioConf
+
+RioConf (a separate MAUI app with an entirely different AndroidX/Compose dependency graph) hit the
+identical crash, concluded 7.x "does not run", and fell back to a 6.4.1 binding. Both apps are .NET
+Android, so both got the alphabetical preload. The crash was never about their raised dependency
+versions - which is exactly why changing versions never helped.
+
+### A second, unrelated bug this uncovered
+
+Once the join actually worked, `ZmConfActivity` crashed with
+`ClassNotFoundException: coil.decode.GifDecoder$Factory` - the in-meeting UI builds a Coil
+`ImageLoader` with a GIF decoder. Zoom's sample `build.gradle` does force `libraries.coilGif`; only
+`coil-base`/`coil` had been vendored here. Fixed with
+`<AndroidMavenLibrary Include="io.coil-kt:coil-gif" Version="2.3.0" Bind="false" />` plus its
+required `Xamarin.AndroidX.VectorDrawable.Animated` (XA4242). This failure is unreachable until the
+native crash is fixed, which is why it never showed up earlier.
 
 ## What actually blocked initialize (fixed)
 
@@ -102,7 +160,8 @@ and the mismatch is fatal rather than cosmetic.
 
 ## What was ruled out for the join crash
 
-Each of these was tested and disproven — recorded so they aren't retried:
+Each of these was tested and disproven before the real cause (native library load order, above) was
+found — recorded so they aren't retried:
 
 | Hypothesis | Test | Result |
 |---|---|---|
@@ -122,44 +181,49 @@ The Material3/ZAK change was first tested with placeholder meeting credentials a
 
 The Material3/Compose/ZAK changes are kept regardless (see "What actually blocked initialize" and the join flow in `ZoomSDKService.Android.cs`) - they're independently correct alignment with Zoom's own declared dependency versions and the documented ZAK requirement, and may prevent a *different*, later-stage failure (the managed `NoSuchMethodError` this same reference document describes) once the native crash itself is resolved. They just aren't the fix for this crash.
 
-## The decisive test (in progress / next step)
+## The decisive test that cracked it
 
-Built Zoom's own **unmodified** sample app (`mobilertc-android-studio/sample`, from the 7.1.6.41900
-SDK download) with plain Gradle 8.11.1 + JDK 21 — no .NET, no MAUI, no binding project involved at
-all. This isolates whether the crash is:
-- **A defect in Zoom's SDK** for this device/Android version (if their own sample also crashes), or
-- **Something in .NET Android's packaging** that genuinely differs from Gradle's (if their sample
-  works).
+Zoom's own **unmodified** sample (`mobilertc-android-studio/sample`, plain Gradle 8.11.1 + JDK 21, no
+.NET/MAUI) was built and run on the same Nokia G21, joining the same meeting with the same ZAK. It
+**worked** - ruling out "Zoom SDK defect on this device/Android 13/single-process mode" and pointing
+at .NET Android packaging. Diffing the two running processes then produced the load-order finding
+above.
 
 Build notes if repeating this:
-- `local.properties` needs `sdk.dir=C:\Program Files (x86)\Android\android-sdk` (escaped backslashes)
-  — get this wrong and Gradle fails with a cryptic `IOException: filename... syntax is incorrect`
-  many tasks deep, not at the manifest step.
-- Run from PowerShell with native Windows paths for `JAVA_HOME`/`ANDROID_HOME` — bash's
-  forward-slash `/c/Program Files/...` form appears to trip some path handling inside Gradle on
-  Windows.
-- `us.zoom.sdksample.initsdk.AuthConstants.SDK_JWTTOKEN` is a **hardcoded compile-time constant**,
-  not a runtime UI field — the sample has no JWT entry screen. Set it and rebuild
-  (`./gradlew.bat :sample:assembleDebug`, ~13 minutes cold, faster once Gradle's cache is warm) to
-  test with a real token.
-- First `packageDebug` run failed with a vague `IncrementalSplitterRunnable` failure; a bare retry of
-  the same command succeeded. Possibly a transient lock/cache issue — not investigated further.
 
-**Whoever picks this up next: fill in the JWT, rebuild, install `sample-debug.apk` alongside this
-repo's `SampleApp`, join the same meeting, and check whether the identical `SIGSEGV` at
-`Android_InitConfModule4SingleProcess+56` occurs.**
+- `local.properties` needs `sdk.dir=C:\Program Files (x86)\Android\android-sdk` with escaped
+  backslashes - get it wrong and Gradle fails with a cryptic
+  `IOException: filename... syntax is incorrect` many tasks deep, not at the manifest step.
+- Run from PowerShell with native Windows paths for `JAVA_HOME`/`ANDROID_HOME`.
+- `sample/build.gradle` needs `packagingOptions { resources { excludes += ["**/*.aidl"] } }` - AGP's
+  resource merger otherwise rejects `.aidl` source files packaged inside `mobilertc.aar`.
+- `us.zoom.sdksample.initsdk.AuthConstants.SDK_JWTTOKEN` is a hardcoded compile-time constant, not a
+  UI field (`./gradlew.bat :sample:assembleDebug`, ~13 min cold).
+- First `packageDebug` failed with a vague `IncrementalSplitterRunnable` error; a bare retry worked.
 
-## If it's a genuine Zoom SDK defect
+## Diagnostic techniques that were essential
 
-- File a support ticket with Zoom. This report is unusually strong evidence: two independent
-  dependency graphs, both hitting the identical native function and offset pattern.
-- Cite: SDK version `7.1.6.41900`, device (Nokia G21 / `ShadowcatPlus_00WW`, Android 13,
-  `TP1A.220624.014`), the exact backtrace above, and — once run — whether Zoom's own sample
-  reproduces it.
-- Use the format the [dev forum FAQ](https://devforum.zoom.us/t/please-read-before-post-troubleshooting-tips-for-zoom-mobile-sdks-faq/4366)
-  asks for: description, SDK version, reproducible steps, screenshots, device info, and error
-  logs/crash analytics. That thread is a submission template, not a troubleshooting checklist — it
-  has no technical content to check against.
+Reusable for any future native crash in this SDK:
+
+- **`EnableGenerateDump` must be `false` to get a usable backtrace.** When `true`, the SDK installs
+  its own signal handler, writes an *encrypted* `.dmp` to `/sdcard/Android/data/<pkg>/logs/` that
+  only Zoom support can read, and exits - so `tombstoned` never prints a symbolised backtrace.
+  `zSdkApp_0.log` in that directory is encrypted too.
+- **Capture with a live `adb logcat -b all > file` running.** A post-hoc `logcat -d` repeatedly missed
+  the `DEBUG`/tombstone block; tombstones under `/data/tombstones` are root-only on this device.
+- **A Debug build is required for `run-as`.** A previously-installed Release APK silently failed
+  `run-as` with "package not debuggable", blocking access to the app's private data dir.
+- **Symbolise by hand.** Zoom's `.so` files keep only `.dynsym`, so nearest-symbol lookups land on
+  unrelated names. Parse the ELF, disassemble the faulting `pc` (capstone), then resolve the data
+  reference through `.rela.dyn` - that is what produced `g_javaVM`.
+- **Do not trust a frame's `+offset` as the crash site** when the named function is a thunk;
+  `Android_InitConfModule4SingleProcess+56` is a `bl`, i.e. a return address.
+- **`pm clear` breaks a Fast Deployment Debug build** (it wipes `files/.__override__`), giving
+  `No assemblies found ... Assuming this is part of Fast Deployment. Exiting...` and SIGABRT.
+  Reinstall after clearing app data.
+- **Compare against the working native app, mechanically.** Class sets, native `.so` sets, merged
+  manifest components, resource tables and permissions were all diffed APK-to-APK and all came back
+  equivalent; the load *order* was the only real difference, and only a runtime log showed it.
 
 ### External research already done (don't repeat this)
 
@@ -189,12 +253,10 @@ repo's `SampleApp`, join the same meeting, and check whether the identical `SIGS
   this exact combination (device/Android 13/SDK 7.1.6/single-process mode) — worth stating plainly in
   the support ticket rather than assuming Zoom staff will recognize it.
 
-## Fallback
+## Fallback (no longer needed)
 
-RioConf's separate **6.4.1** binding (already upgraded to net10) is known-good at runtime. If 7.1.6
-turns out to be unusable on Android for the foreseeable future, shipping 6.4.1 is a working outcome
-— check it still meets Zoom's [minimum supported version](https://developers.zoom.us/docs/meeting-sdk/minimum-version)
-policy before committing to that path.
+RioConf's separate **6.4.1** binding was the fallback while 7.1.6 appeared unusable. 7.1.6 now joins
+meetings, so the fallback is not required. Kept here only as context for why RioConf sits on 6.4.1.
 
 ## Unrelated but real blocker: package size
 
@@ -203,7 +265,7 @@ needs a distribution decision independent of whether the crash above gets resolv
 
 ## Other loose ends from this pass
 
-- `blueparrottsdk`, `constraintlayout-compose`, `coil-gif`, and MLKit text-recognition are declared
+- `blueparrottsdk` and MLKit text-recognition are declared
   by Zoom's `versions.gradle`/`build.gradle` but have no usable Xamarin binding. Documented inline in
   `MobileRTC.Android.csproj`; features depending on them will fail at runtime if exercised.
 - Several 6.1.1-era `Transforms/Metadata.xml` rules were keyed to Zoom's *obfuscated* internal class/

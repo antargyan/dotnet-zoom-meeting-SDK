@@ -70,6 +70,27 @@ public class AppSettings
 
 ## Android Gotchas
 
+* **REQUIRED for 7.x: disable .NET Android's JNI native-library preload.** Without this, the SDK
+  initializes fine but *joining a meeting* hard-crashes with `SIGSEGV` (fault addr `0x0`) inside
+  `Android_InitConfModule4SingleProcess`.
+```xml
+    <PropertyGroup>
+      <AndroidIgnoreAllJniPreload>true</AndroidIgnoreAllJniPreload>
+    </PropertyGroup>
+```
+  Why: .NET Android 10 preloads every JNI-referenced native library at startup in **alphabetical**
+  order. Four of the SDK's 84 native libraries each export a preemptible `g_javaVM` global and set it
+  from their own `JNI_OnLoad`, so which copy everything binds to depends on load order. Zoom's own
+  loader deliberately loads `libzReflection.so` first; the alphabetical sweep loads `libcmmlib.so`
+  first instead, leaving `libzVideoApp.so` bound to a `g_javaVM` that nothing initializes. The
+  meeting-join path then calls `GetEnv()` on that null `JavaVM*`. Setting this property hands load
+  ordering back to Zoom's loader, matching Zoom's native sample. Preloading is only a startup
+  optimization, so nothing is lost. Full analysis:
+  [`docs/android-7.1.6-upgrade-findings.md`](docs/android-7.1.6-upgrade-findings.md).
+* Your consuming app must target **minSdk 28** (`<SupportedOSPlatformVersion>28.0`) — `mobilertc.aar`
+  declares `minSdkVersion=28`, and setting it in `AndroidManifest.xml` instead fails with XA1036.
+* `AndroidEnableMultiDex` must be `true`, and `JavaMaximumHeapSize` needs to be large (6G here) or
+  d8/r8 thrashes for hours on the ~295 MB aar.
 * Your consuming app requires the following nuget versions to be explicitly set for android
 ```
     <!-- Android Only Nuget Packages (.net 10 / MAUI 10.0.20 aligned set) -->
@@ -85,7 +106,12 @@ public class AppSettings
       <PackageReference Include="Xamarin.AndroidX.Lifecycle.ViewModel.Ktx" Version="2.9.2.1" />
 ```
   The AndroidX versions above are pinned to the generation MAUI 10.0.20 depends on (AndroidX Lifecycle 2.9.2.1). Mixing generations produces NU1107/NU1608 restore errors. See `src/MAUI/SampleApp/SampleApp.csproj` for the full working list.
-* Requires your android app to compile for Android 14
+* Requires your android app to compile against Android 16 (API 36) — `net10.0-android` with
+  `android:targetSdkVersion="36"`
+* Coil is needed at runtime: `ZoomSDK.initialize` builds a Coil `ImageLoader` (needs `coil-base`), and
+  the in-meeting UI adds a GIF decoder (needs `coil-gif`, which in turn needs
+  `Xamarin.AndroidX.VectorDrawable.Animated`). Missing either shows up as a `ClassNotFoundException`
+  at init or on join, not at build time. See `SampleApp.csproj` for the exact wiring.
 
 ## Installation and integration - Android
  

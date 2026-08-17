@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" InitialTargets="ConfigureZoomAndroidBuild">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup Condition="'$(TargetFramework)'=='net10.0-android'">
       <MauiVersion>10.0.20</MauiVersion>
     </PropertyGroup>
@@ -7,6 +7,17 @@
     <!-- mobilertc.aar is ~295 MB of Java; at a smaller heap d8/r8 thrashes for hours. -->
     <JavaMaximumHeapSize>6G</JavaMaximumHeapSize>
     <AndroidEnableMultiDex>true</AndroidEnableMultiDex>
+    <!-- MUST stay true for the Zoom Meeting SDK. .NET Android 10 preloads every native library
+         that JNI references at startup (dso_jni_preloads_idx in libxamarin-app.so), in alphabetical
+         order. mobilertc.aar ships 84 native libs, four of which (libcmmlib, libzReflection,
+         libzoombase_shared, libzUnifyWebViewApp) each export a preemptible global `g_javaVM` and set
+         it from their own JNI_OnLoad via the GOT. Zoom's loader deliberately loads libzReflection
+         FIRST so every reference binds to that copy; the alphabetical sweep loads libcmmlib (c)
+         first instead, so libzVideoApp.so's g_javaVM binds to a copy nobody initialises. Joining a
+         meeting then does GetEnv(g_javaVM=NULL, &env, JNI_VERSION_1_4) and SIGSEGVs at 0x0 inside
+         Android_InitConfModule4SingleProcess. Disabling the preload lets Zoom's own Java loader
+         control the order, which is what the working native sample does. -->
+    <AndroidIgnoreAllJniPreload>true</AndroidIgnoreAllJniPreload>
     <!-- d8 lists every input jar on its command line; the aar expands to thousands, and at the
          default obj depth that exceeds Windows' 32 KB limit, surfacing as MSB6003 / Win32 206
          "filename or extension is too long" against java.exe. -->
@@ -111,6 +122,53 @@
          through normal aapt2 processing and does not hit the coil-base .stamp/APT2144 defect.
          Bind="false": Zoom's Compose UI consumes this internally; no managed code here calls it. -->
     <AndroidMavenLibrary Include="androidx.compose.material3:material3-android" Version="1.5.0-alpha07" Repository="Google" Bind="false" />
+    <!-- ================================================================================
+         Dependencies Zoom's own code REFERENCES but our APK was missing entirely.
+         Established by diffing the class sets of two APKs on the same device - Zoom's own
+         Gradle-built sample (which reaches MEETING_STATUS_INMEETING) versus this app (which
+         SIGSEGVs in libzVideoApp.so) - then counting, inside mobilertc.aar's 43,353 classes, how
+         many reference each package our APK lacked:
+             androidx/constraintlayout/compose   74 referencing classes   (0 present here)
+             androidx/paging                     18
+             androidx/credentials                16
+             coil/compose                         6
+         (androidx/compose/material scored 0 - those 951 classes in the working APK are the
+         sample app's own UI, not an SDK requirement, so it is deliberately NOT added.)
+
+         Zoom's SAMPLE build.gradle declares composeConstraintlayout / composePaging / coil /
+         credentials / credentialsAuth. An earlier pass here removed credentials and paging on the
+         grounds that mobilertc/build.gradle (the AAR module) does not declare them - that was the
+         wrong file to check: the SDK still reaches for these classes at runtime, and a missing class
+         behind Zoom's JNI/reflection boundary comes back null and gets dereferenced natively.
+         ================================================================================ -->
+    <AndroidMavenLibrary Include="androidx.constraintlayout:constraintlayout-compose-android" Version="1.1.1" Repository="Google" Bind="false" />
+    <AndroidMavenLibrary Include="androidx.paging:paging-compose-android" Version="3.3.5" Repository="Google" Bind="false" />
+    <AndroidMavenLibrary Include="androidx.paging:paging-runtime" Version="3.3.5" Repository="Google" Bind="false" />
+    <AndroidMavenLibrary Include="io.coil-kt:coil-compose" Version="2.3.0" Bind="false" />
+    <AndroidMavenLibrary Include="io.coil-kt:coil-compose-base" Version="2.3.0" Bind="false" />
+    <!-- coil-gif: Zoom's sample forces libraries.coilGif, and once the meeting UI actually starts
+         (i.e. after the g_javaVM load-order fix below let the join succeed) ZmConfActivity builds its
+         ImageLoader with a GifDecoder.Factory, giving
+         ClassNotFoundException: coil.decode.GifDecoder$Factory. -->
+    <AndroidMavenLibrary Include="io.coil-kt:coil-gif" Version="2.3.0" Bind="false" />
+    <!-- credentials/credentialsAuth: declared by Zoom's sample, 16 referencing classes in the aar. -->
+    <PackageReference Include="Xamarin.AndroidX.Credentials" Version="1.2.2" />
+    <PackageReference Include="Xamarin.AndroidX.Credentials.PlayServicesAuth" Version="1.2.2" />
+    <!-- Real transitive dependencies of the packages added above (verifier-identified, all genuinely
+         absent rather than naming mismatches). -->
+    <PackageReference Include="Xamarin.AndroidX.ConstraintLayout.Core" Version="1.1.1.6" />
+    <PackageReference Include="Xamarin.AndroidX.Paging.Common" Version="3.3.5.1" />
+    <PackageReference Include="Xamarin.AndroidX.Paging.Common.Ktx" Version="3.3.5.1" />
+    <!-- Required by coil-gif (XA4242); Zoom's sample forces libraries.vectordrawableAnimated too. -->
+    <PackageReference Include="Xamarin.AndroidX.VectorDrawable.Animated" Version="1.1.0.26" />
+    <!-- accompanist-drawablepainter pulled from Maven Central at coil-compose's exact required
+         version (0.30.0) rather than via Xamarin.Google.Accompanist.DrawablePainter, whose only
+         builds (0.37.3.x) depend on Compose UI 1.11.3.1 and would drag the whole Compose graph off
+         Zoom's declared 1.9.4 line. -->
+    <AndroidMavenLibrary Include="com.google.accompanist:accompanist-drawablepainter" Version="0.30.0" Bind="false" />
+    <!-- ui-unit-android: satisfied in substance by Compose.UI 1.9.4 -> Compose.UI.Unit 1.9.4 (well
+         above the 1.7.2 floor); the verifier cannot map the KMP-suffixed artifact id. -->
+    <AndroidIgnoredJavaDependency Include="androidx.compose.ui:ui-unit-android:1.7.2" />
     <!-- Material3's own POM dependencies, satisfied explicitly (same reasoning as Coil's above). -->
     <PackageReference Include="Xamarin.AndroidX.Annotation.Experimental" Version="1.4.1.10" />
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.Common.Java8" Version="2.9.4" />
@@ -182,8 +240,10 @@
          project directory is picked up by default @(AndroidLibrary) globbing and BOUND, and the
          generated managed Coil API does not compile (CS0535/CS0538/CS0426 on CrossfadeDrawable,
          IEventListener...). Only the Java classes are wanted here. -->
-    <AndroidLibrary Include="..\CoilJars\coil-base-2.3.0.jar" Bind="false" />
-    <AndroidLibrary Include="..\CoilJars\coil-2.3.0.jar" Bind="false" />
+    <!-- JavaArtifact tells the dependency verifier these vendored jars ARE io.coil-kt:coil-base /
+         io.coil-kt:coil 2.3.0, which coil-compose's POM requires (otherwise XA4241). -->
+    <AndroidLibrary Include="..\CoilJars\coil-base-2.3.0.jar" Bind="false" JavaArtifact="io.coil-kt:coil-base:2.3.0" />
+    <AndroidLibrary Include="..\CoilJars\coil-2.3.0.jar" Bind="false" JavaArtifact="io.coil-kt:coil:2.3.0" />
     <!-- coil-compose / coil-compose-base are deliberately NOT included: they require
          accompanist-drawablepainter, whose only current Xamarin binding (0.37.3.x) depends on
          Compose UI 1.11.3.1 and would drag the whole Compose graph off Zoom's 1.9.4 line - the exact
@@ -254,16 +314,20 @@
   </PropertyGroup>
 
   <!--
-  Set from InitialTargets, not a PropertyGroup: the Xamarin.AndroidX/Firebase packages ship
-  buildTransitive targets that assign AndroidManifestMerger unconditionally and import after the
-  project body, clobbering anything set during evaluation. mobilertc.aar bundles its own Firebase
-  and Play Services copies, so the default merger rejects the duplicate namespaces (AMM0000); the
-  legacy merger skips that validation while still merging library manifests, so Zoom's activities
-  and permissions are preserved.
+  The legacy manifest merger was previously forced here (via InitialTargets, because the
+  Xamarin.AndroidX/Firebase buildTransitive targets assign AndroidManifestMerger unconditionally and
+  import after the project body). It is NO LONGER USED, deliberately:
+
+    * The two problems it worked around are both gone - the AMM0000 duplicate-namespace errors came
+      from Xamarin.Google.MLKit.TextRecognition (since removed, see the note above), and the
+      "minSdkVersion 23 cannot be smaller than 28" error is fixed by SupportedOSPlatformVersion=28.
+    * It silently DROPS application-element attributes from library manifests. Verified by dumping
+      the built APK's manifest: mobilertc.aar declares
+      android:networkSecurityConfig="@xml/msdk_network_security_config" on its <application>, and
+      that attribute was absent from the merged result. Components and meta-data still merged, so the
+      loss is easy to miss.
+
+  If AMM0000 duplicate-namespace errors ever return, fix the offending duplicate package properly
+  rather than reinstating the legacy merger.
   -->
-  <Target Name="ConfigureZoomAndroidBuild" Condition="$(TargetFramework.Contains('-android'))">
-    <PropertyGroup>
-      <AndroidManifestMerger>legacy</AndroidManifestMerger>
-    </PropertyGroup>
-  </Target>
 </Project>
