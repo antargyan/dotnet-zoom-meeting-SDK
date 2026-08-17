@@ -80,25 +80,47 @@ public class DroidZoomSDKService
 
     public async Task JoinMeeting(string meetingID, string meetingPassword, string displayName = "Zoom Demo")
     {
-        // Android's JoinMeetingParams has no ZAK field - an anonymous join never takes one. (The
-        // Windows SDK does accept a userZAK on join; hosting on Android needs
-        // StartMeetingParamsWithoutLogin.ZoomAccessToken instead.)
+        // Corrected: JoinMeetingParam4WithoutLogin (a JoinMeetingParams subclass) DOES carry a
+        // ZoomAccessToken field - the previous comment here claiming Android's join path has no ZAK
+        // field at all was wrong. Since 2026-03-02 Zoom rejects an anonymous join to a meeting hosted
+        // by a different Zoom account than the one this SDK app is registered under (error 13296, or
+        // 4012 on older builds) - exactly the case where someone hosts from their own personal
+        // account. A ZAK is the documented fix. Best-effort: TryGetZakAsync returns null rather than
+        // throwing, so same-account meetings still join fine without one.
+        var zak = await ZoomAuthClient.TryGetZakAsync();
+
         var meetingService = ZoomSDK.Instance.MeetingService;
 
-        var result = meetingService.JoinMeetingWithParams(global::Android.App.Application.Context,
-            new JoinMeetingParams
-            {
-                MeetingNo = meetingID,
-                DisplayName = displayName,
-                Password = meetingPassword
-            }, new JoinMeetingOptions { });
+        var options = new JoinMeetingOptions
+        {
+            NoDrivingMode = true,
+            NoInvite = true,
+            NoShare = true,
+            NoRecord = true
+        };
 
-        global::Android.Util.Log.Info("ZoomSampleApp", $"JoinMeetingWithParams returned {result}");
+        var result = string.IsNullOrEmpty(zak)
+            ? meetingService.JoinMeetingWithParams(global::Android.App.Application.Context,
+                new JoinMeetingParams
+                {
+                    MeetingNo = meetingID,
+                    DisplayName = displayName,
+                    Password = meetingPassword
+                }, options)
+            : meetingService.JoinMeetingWithParams(global::Android.App.Application.Context,
+                new JoinMeetingParam4WithoutLogin
+                {
+                    MeetingNo = meetingID,
+                    DisplayName = displayName,
+                    Password = meetingPassword,
+                    ZoomAccessToken = zak
+                }, options);
+
+        global::Android.Util.Log.Info("ZoomSampleApp",
+            $"JoinMeetingWithParams returned {result} (zak={(zak is null ? "none" : "present")})");
 
         if (result != MeetingError.MeetingErrorSuccess)
             LastError = $"join error {result}";
-
-        await Task.CompletedTask;
     }
 
     private static string DescribeInitError(int errorCode) => errorCode switch

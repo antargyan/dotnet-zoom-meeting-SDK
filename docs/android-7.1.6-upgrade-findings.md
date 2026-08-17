@@ -114,6 +114,13 @@ Each of these was tested and disproven — recorded so they aren't retried:
 | Missing/dropped manifest components | Diffed all `us.zoom.*`/`com.zipow.*` manifest entries (aar vs merged APK) | All 37 present; legacy manifest merger works correctly |
 | Stripped coroutines `ServiceLoader` metadata | Checked `META-INF/services/kotlinx.coroutines.*` in the built APK | Present and correct |
 | Missing `BROADCAST_STICKY` permission (only real gap vs Zoom's sample) | N/A — too minor to explain a native SIGSEGV | Not pursued further |
+| Material3 too old (`shouldExecute(ZI)Z` theory, see below) + entire "working native join flow" checklist | Upgraded material3-android to Zoom's declared 1.5.0-alpha07, pinned Compose.Runtime/UI/Foundation to 1.9.4 explicitly, rewrote the join flow to fetch and attach a ZAK via `JoinMeetingParam4WithoutLogin` | **Identical crash**, same two leading `libzVideoApp.so` offsets, tested with real meeting credentials |
+
+### A false negative worth recording
+
+The Material3/ZAK change was first tested with placeholder meeting credentials and initially reported (wrongly) as fixing the crash — `JoinMeetingWithParams` returned `99` (`MEETING_ERROR_INVALID_ARGUMENTS`) with no crash. That was a false negative, not a fix: invalid-argument rejection is validated early and synchronously, before the native conf-process path ever runs, so that test could never have reached the crash site regardless of whether it was fixed. Retesting with real meeting credentials (`JoinMeetingWithParams returned 0`, ZAK present, join accepted) reproduced the identical crash half a second later. **Always retest against a real meeting, not just "no crash," before concluding a join-path fix worked** - a rejected join and a fixed crash look the same in logcat if you only check for the absence of `Fatal signal`.
+
+The Material3/Compose/ZAK changes are kept regardless (see "What actually blocked initialize" and the join flow in `ZoomSDKService.Android.cs`) - they're independently correct alignment with Zoom's own declared dependency versions and the documented ZAK requirement, and may prevent a *different*, later-stage failure (the managed `NoSuchMethodError` this same reference document describes) once the native crash itself is resolved. They just aren't the fix for this crash.
 
 ## The decisive test (in progress / next step)
 

@@ -64,8 +64,18 @@
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData" Version="2.9.4" />
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Ktx" Version="2.9.4" />
     <PackageReference Include="Xamarin.Android.ReactiveX.RxJava3.RxAndroid" Version="3.0.2.13" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.Material3" Version="1.4.0" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.Material3.WindowSizeClass" Version="1.4.0" />
+    <!-- Material3 is NOT referenced here (was: Xamarin.AndroidX.Compose.Material3 1.4.0). Zoom's own
+         mobilertc/versions.gradle pins composeMaterial3Version to 1.5.0-alpha07; the newest Xamarin
+         binding on NuGet is 1.4.0.3. A working reference build of this exact SDK version
+         (7.1.6.41900) reports that older Material3 causes
+         "NoSuchMethodError: shouldExecute(ZI)Z in androidx.compose.runtime.Composer" the moment a
+         meeting screen opens - shouldExecute only exists from Compose runtime 1.8+, and Zoom's own
+         compiled Compose code calls it. Consuming apps must add material3-android 1.5.0-alpha07
+         themselves via AndroidMavenLibrary (see SampleApp.csproj) - the same pattern as Coil above,
+         and for the same reason: no compatible Xamarin binding exists yet. -->
+    <PackageReference Include="Xamarin.AndroidX.Compose.Runtime" Version="1.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.UI" Version="1.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.Foundation" Version="1.9.4" />
     <PackageReference Include="Xamarin.AndroidX.Compose.UI.Tooling.Preview" Version="1.9.4" />
     <!-- MISSING  androidx.constraintlayout:constraintlayout-compose:1.1.1 - no Xamarin binding published -->
     <PackageReference Include="Xamarin.AndroidX.Activity.Compose" Version="1.11.0" />

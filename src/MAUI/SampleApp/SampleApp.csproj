@@ -5,7 +5,7 @@
     <PropertyGroup>
     <TargetFrameworks>net10.0-android</TargetFrameworks>
     <!-- mobilertc.aar is ~295 MB of Java; at a smaller heap d8/r8 thrashes for hours. -->
-    <JavaMaximumHeapSize>4G</JavaMaximumHeapSize>
+    <JavaMaximumHeapSize>6G</JavaMaximumHeapSize>
     <AndroidEnableMultiDex>true</AndroidEnableMultiDex>
     <!-- d8 lists every input jar on its command line; the aar expands to thousands, and at the
          default obj depth that exceeds Windows' 32 KB limit, surfacing as MSB6003 / Win32 206
@@ -101,8 +101,67 @@
     <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.0.1.11" />
     <PackageReference Include="Xamarin.AndroidX.Lifecycle.LiveData.Ktx" Version="2.9.4" />
     <PackageReference Include="Xamarin.Android.ReactiveX.RxJava3.RxAndroid" Version="3.0.2.13" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.Material3" Version="1.4.0" />
-    <PackageReference Include="Xamarin.AndroidX.Compose.Material3.WindowSizeClass" Version="1.4.0" />
+    <!-- material3-android at Zoom's OWN declared version (composeMaterial3Version in
+         mobilertc/versions.gradle), not the 1.4.0.3 ceiling of the Xamarin NuGet binding. A working
+         reference build of this exact SDK (7.1.6.41900) reports that anything older throws
+         "NoSuchMethodError: shouldExecute(ZI)Z in androidx.compose.runtime.Composer" from Zoom's own
+         compiled Compose screens - shouldExecute only exists from Compose runtime 1.8+.
+         AndroidMavenLibrary, not a jar (contrast with Coil above): material3-android genuinely ships
+         resources (175 res/values-*/values-*.xml entries for accessibility strings), so it goes
+         through normal aapt2 processing and does not hit the coil-base .stamp/APT2144 defect.
+         Bind="false": Zoom's Compose UI consumes this internally; no managed code here calls it. -->
+    <AndroidMavenLibrary Include="androidx.compose.material3:material3-android" Version="1.5.0-alpha07" Repository="Google" Bind="false" />
+    <!-- Material3's own POM dependencies, satisfied explicitly (same reasoning as Coil's above). -->
+    <PackageReference Include="Xamarin.AndroidX.Annotation.Experimental" Version="1.4.1.10" />
+    <PackageReference Include="Xamarin.AndroidX.Lifecycle.Common.Java8" Version="2.9.4" />
+    <!-- Removing the old Material3 1.4.0 NuGet package (above) also removed the real, bound helper
+         packages it used to pull in transitively - Compose.Material.Ripple and (indirectly)
+         Graphics.Shapes were never replaced by anything once we switched to the raw AAR. Verified via
+         nuspec inspection, not assumed: these two are genuinely ABSENT from the current graph, so
+         they are added as real PackageReferences, not ignored. -->
+    <PackageReference Include="Xamarin.AndroidX.Compose.Material.Ripple" Version="1.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Graphics.Shapes" Version="1.0.1" />
+
+    <!-- Everything below WAS verified present via nuspec inspection (not assumed): Material3
+         1.5.0-alpha07's POM declares dependencies under the newer Kotlin-Multiplatform split artifact
+         names, and androidx.annotation/collection's "-jvm" suffix, none of which the older-vintage
+         Xamarin package tags advertise as matching. Each one traces to a real transitive package at
+         >= the required floor:
+           runtime-android          -> Compose.Runtime 1.9.4 -> Compose.Runtime.Android 1.9.4
+           ui-android                -> Compose.UI 1.9.4 -> Compose.UI.Android 1.9.4
+           ui-text-android           -> Compose.Foundation.Android 1.9.4 -> Compose.UI.Text.Android 1.9.4
+           ui-util-android           -> Compose.Foundation.Android 1.9.4 -> Compose.UI.Util.Android 1.9.4
+           foundation-android        -> Compose.Foundation 1.9.4 -> Compose.Foundation.Android 1.9.4
+           foundation-layout-android -> Compose.Animation 1.9.4 -> Compose.Foundation.Layout 1.9.4
+           animation-core-android    -> Compose.Foundation.Android 1.9.4 -> Compose.Animation.Android -> Compose.Animation.Core
+           annotation-jvm            -> Compose.Foundation.Android 1.9.4 -> Annotation.Jvm 1.9.1.5
+           collection-jvm            -> Compose.Foundation.Android 1.9.4 -> Collection.Jvm 1.5.0.3
+         This is a naming/verification-mapping gap, not a missing runtime class. -->
+    <AndroidIgnoredJavaDependency Include="androidx.compose.runtime:runtime-android:1.9.0-rc01" />
+    <AndroidIgnoredJavaDependency Include="androidx.compose.ui:ui-android:1.8.2" />
+    <!-- One entry per artifact id, not per version: AndroidIgnoredJavaDependency keys by
+         groupId:artifactId internally, and a second entry for the same artifact at a different
+         version throws XAJDV7004 ("item with the same key has already been added"), even though
+         ui-text-android/ui-util-android are requested at two different floors (1.8.1 via
+         foundation-android, 1.8.2 via material3-android's own direct deps). -->
+    <AndroidIgnoredJavaDependency Include="androidx.compose.ui:ui-text-android:1.8.2" />
+    <AndroidIgnoredJavaDependency Include="androidx.compose.ui:ui-util-android:1.8.2" />
+    <!-- Material.Ripple and Graphics.Shapes ARE real, present PackageReferences (above) at versions
+         >= these floors - the verifier still can't map them because they advertise the older
+         non-KMP-suffixed artifact id, same class of gap as everything else here. -->
+    <AndroidIgnoredJavaDependency Include="androidx.compose.material:material-ripple-android:1.8.1" />
+    <AndroidIgnoredJavaDependency Include="androidx.graphics:graphics-shapes-android:1.0.1" />
+    <AndroidIgnoredJavaDependency Include="androidx.compose.foundation:foundation-android:1.8.1" />
+    <AndroidIgnoredJavaDependency Include="androidx.compose.foundation:foundation-layout-android:1.8.1" />
+    <AndroidIgnoredJavaDependency Include="androidx.compose.animation:animation-core-android:1.8.1" />
+    <AndroidIgnoredJavaDependency Include="androidx.annotation:annotation-jvm:1.9.1" />
+    <AndroidIgnoredJavaDependency Include="androidx.collection:collection-jvm:1.5.0" />
+    <!-- Compose.Runtime/UI/Foundation pinned explicitly as one matched set at 1.9.4 (Zoom's declared
+         composeUIVersion/composeRuntimeVersion/composeFoundationVersion), rather than left to whatever
+         a transitive resolution happens to pick. -->
+    <PackageReference Include="Xamarin.AndroidX.Compose.Runtime" Version="1.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.UI" Version="1.9.4" />
+    <PackageReference Include="Xamarin.AndroidX.Compose.Foundation" Version="1.9.4" />
     <PackageReference Include="Xamarin.AndroidX.Compose.UI.Tooling.Preview" Version="1.9.4" />
     <!-- MISSING  androidx.constraintlayout:constraintlayout-compose:1.0.1 -->
     <PackageReference Include="Xamarin.AndroidX.Activity.Compose" Version="1.11.0" />
