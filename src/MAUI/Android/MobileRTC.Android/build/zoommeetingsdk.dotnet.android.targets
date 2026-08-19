@@ -1,0 +1,26 @@
+<Project>
+  <!--
+    Shipped inside the zoommeetingsdk.dotnet.android NuGet package. Imported AFTER the consuming
+    project's own properties, so this is where requirements that depend on the consumer's settings
+    are validated. See the companion .props for settings that are defaulted rather than checked.
+  -->
+
+  <Target Name="_ZoomMeetingSdkValidateConsumerSettings"
+      BeforeTargets="_CategorizeAndroidLibraries;BeforeBuild">
+
+    <!-- mobilertc.aar declares minSdkVersion=28. A lower value fails deep in the Android build with
+         a manifest-merger error that does not name Zoom, so check it here instead. Note this cannot
+         be set for the consumer: it comes from $(SupportedOSPlatformVersion) in their project. -->
+    <Error Condition=" '$(SupportedOSPlatformVersion)' != '' And $([MSBuild]::VersionLessThan($(SupportedOSPlatformVersion), '28.0')) "
+        Code="ZOOMSDK001"
+        Text="The Zoom Meeting SDK requires SupportedOSPlatformVersion 28.0 or higher (mobilertc.aar declares minSdkVersion=28); this project targets $(SupportedOSPlatformVersion). Set &lt;SupportedOSPlatformVersion&gt;28.0&lt;/SupportedOSPlatformVersion&gt; for the android target framework." />
+
+    <!-- Joining a meeting SIGSEGVs without this. The .props defaults it to true, so reaching here
+         with it false means the consumer set it deliberately. Warn rather than error: someone may be
+         debugging the preload interaction on purpose. -->
+    <Warning Condition=" '$(AndroidIgnoreAllJniPreload)' != 'true' "
+        Code="ZOOMSDK002"
+        Text="AndroidIgnoreAllJniPreload is '$(AndroidIgnoreAllJniPreload)', not 'true'. The Zoom Meeting SDK crashes with SIGSEGV inside Android_InitConfModule4SingleProcess when a meeting is joined, because .NET Android's alphabetical JNI native-library preload binds libzVideoApp.so's g_javaVM to an uninitialised copy. Remove your override unless you are deliberately testing this." />
+
+  </Target>
+</Project>

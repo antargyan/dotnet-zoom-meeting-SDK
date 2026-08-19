@@ -22,6 +22,17 @@
     <AndroidBoundInterfacesContainStaticAndDefaultInterfaceMethods>false</AndroidBoundInterfacesContainStaticAndDefaultInterfaceMethods>
     <AndroidR8JarPath>../R8/r8.jar</AndroidR8JarPath>
   </PropertyGroup>
+  <!-- MSBuild props/targets shipped inside the package so consuming apps inherit the settings the
+       Zoom SDK cannot run without (chiefly AndroidIgnoreAllJniPreload - see build/*.props).
+       Packed into BOTH build/ and buildTransitive/: build/ applies to a project that references this
+       package directly, buildTransitive/ also applies when the reference arrives transitively. -->
+  <ItemGroup>
+    <None Include="build\zoommeetingsdk.dotnet.android.props" Pack="true" PackagePath="build\" Visible="false" />
+    <None Include="build\zoommeetingsdk.dotnet.android.targets" Pack="true" PackagePath="build\" Visible="false" />
+    <None Include="build\zoommeetingsdk.dotnet.android.props" Pack="true" PackagePath="buildTransitive\" Visible="false" />
+    <None Include="build\zoommeetingsdk.dotnet.android.targets" Pack="true" PackagePath="buildTransitive\" Visible="false" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Teronis.MSBuild.Packaging.ProjectBuildInPackage" Version="1.0.0">
       <PrivateAssets>all</PrivateAssets>

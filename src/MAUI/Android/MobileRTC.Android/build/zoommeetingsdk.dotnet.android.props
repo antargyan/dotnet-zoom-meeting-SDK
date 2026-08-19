@@ -1,0 +1,42 @@
+<Project>
+  <!--
+    Shipped inside the zoommeetingsdk.dotnet.android NuGet package and imported automatically by
+    every consuming project. This carries settings the Zoom Meeting SDK cannot work without, so that
+    consumers are not expected to rediscover them.
+
+    Everything here is conditioned on the property being empty, so a consuming project can always
+    override it by setting the property itself.
+  -->
+  <PropertyGroup>
+    <!--
+      REQUIRED. Without this the SDK initializes fine and then hard-crashes with SIGSEGV
+      (fault addr 0x0) the moment a meeting is joined.
+
+      .NET Android 10 preloads every JNI-referenced native library at process start, in alphabetical
+      order (dso_jni_preloads_idx, baked into libxamarin-app.so). mobilertc.aar ships 84 native
+      libraries, four of which (libcmmlib, libzReflection, libzoombase_shared, libzUnifyWebViewApp)
+      each EXPORT a preemptible global `g_javaVM` and set it from their own JNI_OnLoad via the GOT,
+      while libzVideoApp.so only IMPORTS it. Which copy every reference binds to is therefore decided
+      purely by library load order.
+
+      Zoom's own Java loader deliberately loads libzReflection.so first; the alphabetical preload
+      loads libcmmlib.so (c) first instead, leaving libzVideoApp.so bound to a g_javaVM that nothing
+      ever initialises. Joining then calls GetEnv(g_javaVM=NULL, &env, JNI_VERSION_1_4) and faults
+      inside Android_InitConfModule4SingleProcess.
+
+      Disabling the preload hands ordering back to Zoom's loader, which is what Zoom's own native
+      Gradle sample does. Preloading is only a startup optimisation - libraries still load on demand,
+      so nothing is lost. Older Zoom SDKs are affected too (6.4.1 exports g_javaVM from 14 libraries).
+
+      Full analysis: docs/android-7.1.6-upgrade-findings.md in the binding repository.
+    -->
+    <AndroidIgnoreAllJniPreload Condition=" '$(AndroidIgnoreAllJniPreload)' == '' ">true</AndroidIgnoreAllJniPreload>
+
+    <!-- mobilertc.aar is ~295 MB of Java. Below ~4G, d8/r8 thrashes for a very long time instead of
+         failing outright, which reads as a hung build. -->
+    <JavaMaximumHeapSize Condition=" '$(JavaMaximumHeapSize)' == '' ">6G</JavaMaximumHeapSize>
+
+    <!-- The SDK's class count is far past the single-dex 64K method limit. -->
+    <AndroidEnableMultiDex Condition=" '$(AndroidEnableMultiDex)' == '' ">true</AndroidEnableMultiDex>
+  </PropertyGroup>
+</Project>
