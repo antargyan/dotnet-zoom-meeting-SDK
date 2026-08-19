@@ -22,5 +22,24 @@
         Code="ZOOMSDK002"
         Text="AndroidIgnoreAllJniPreload is '$(AndroidIgnoreAllJniPreload)', not 'true'. The Zoom Meeting SDK crashes with SIGSEGV inside Android_InitConfModule4SingleProcess when a meeting is joined, because .NET Android's alphabetical JNI native-library preload binds libzVideoApp.so's g_javaVM to an uninitialised copy. Remove your override unless you are deliberately testing this." />
 
+
+    <!-- Coil is a hard runtime requirement that this package deliberately cannot carry: a binding
+         project's default globbing would BIND any coil jar placed here, and the generated managed
+         Coil API does not compile (CS0535/CS0737/CS0102 on CrossfadeDrawable, IEventListener...).
+         So consumers must supply it, and ZoomSDK.initialize throws
+         java.lang.ClassNotFoundException: coil.ImageLoader$Builder without it - a runtime failure
+         that gives no hint about Coil being missing. The in-meeting UI additionally needs coil-gif.
+
+         Heuristic check, hence a warning rather than an error: it only looks for "coil" among the
+         items that could provide it, so an unusual supply route may trip it harmlessly. -->
+    <ItemGroup>
+      <_ZoomSdkCoilCandidate Include="@(AndroidLibrary);@(AndroidMavenLibrary);@(PackageReference)" />
+      <_ZoomSdkCoilHit Include="@(_ZoomSdkCoilCandidate)"
+          Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Identity)', '(?i)coil'))" />
+    </ItemGroup>
+
+    <Warning Condition=" '@(_ZoomSdkCoilHit)' == '' "
+        Code="ZOOMSDK003"
+        Text="No Coil dependency detected. ZoomSDK.initialize builds a Coil ImageLoader and will throw ClassNotFoundException: coil.ImageLoader$Builder at runtime without it, and the in-meeting UI also needs coil-gif. Add: &lt;AndroidMavenLibrary Include=&quot;io.coil-kt:coil-base&quot; Version=&quot;2.3.0&quot; Bind=&quot;false&quot; /&gt;, io.coil-kt:coil, io.coil-kt:coil-gif, plus PackageReference Xamarin.AndroidX.VectorDrawable.Animated. See the binding repo README (Android Gotchas)." />
   </Target>
 </Project>
