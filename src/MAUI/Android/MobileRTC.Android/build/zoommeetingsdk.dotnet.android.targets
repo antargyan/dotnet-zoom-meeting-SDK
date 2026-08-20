@@ -5,7 +5,12 @@
     are validated. See the companion .props for settings that are defaulted rather than checked.
   -->
 
+  <!-- Android TFMs only. A multi-targeted app (android;ios;windows;maccatalyst) evaluates these
+       targets for EVERY TFM, and without this condition the minSdk check reads a Windows
+       SupportedOSPlatformVersion such as 10.0.17763.0, or an iOS 15.0, as "less than 28" and
+       fails the build with ZOOMSDK001 on a platform Zoom Android has nothing to do with. -->
   <Target Name="_ZoomMeetingSdkValidateConsumerSettings"
+      Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'"
       BeforeTargets="_CategorizeAndroidLibraries;BeforeBuild">
 
     <!-- mobilertc.aar declares minSdkVersion=28. A lower value fails deep in the Android build with
